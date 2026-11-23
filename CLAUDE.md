@@ -33,6 +33,11 @@ import. Do not go back to an `<img>`: the logo flickered on every page change.
 All mockup pages are built. Photos in the mockup are placeholders: content supports an optional `image`
 (path under `public/`) and shows a dashed "Photo à venir" box until one is provided.
 
+## Repository
+
+GitHub: https://github.com/BergmannFlorian/concise (**private**, branch `master`, remote `origin`).
+`gh` is logged in as BergmannFlorian. Commit/push only when the user asks.
+
 ## Stack & commands
 
 - **Astro 7** (fully static), strict TypeScript, Zod 4 (`import { z } from 'astro/zod'`).
