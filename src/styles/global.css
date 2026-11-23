@@ -45,6 +45,17 @@
   --live: #c0392b;
   --illustration-filter: none;
 
+  /* Olive feature block (waste section) */
+  --olive-bg: #5c6b2e;
+  --olive-card: #6b7a3b;
+  --olive-text: #f6f3ec;
+  --olive-muted: #e5e8d6;
+  --olive-border: #a3ae7a;
+
+  /* Emergency box */
+  --danger-bg: #f7e9e5;
+  --danger-text: #7e2a1e;
+
   --font-sans: 'Inter Variable', Inter, system-ui, sans-serif;
   --font-serif: 'Fraunces Variable', Fraunces, Georgia, serif;
   --radius-lg: 28px;
@@ -90,6 +101,13 @@
     --ink-rule: #263031;
     --live: #e0604f;
     --illustration-filter: brightness(0.78) saturate(0.9);
+  --olive-bg: #2f3818;
+  --olive-card: #3b4621;
+  --olive-text: #f1ede3;
+  --olive-muted: #d5d9c3;
+  --olive-border: #6e7a48;
+  --danger-bg: #3a201b;
+  --danger-text: #f2b8ac;
     color-scheme: dark;
   }
 }
@@ -128,6 +146,13 @@
   --ink-rule: #263031;
   --live: #e0604f;
   --illustration-filter: brightness(0.78) saturate(0.9);
+  --olive-bg: #2f3818;
+  --olive-card: #3b4621;
+  --olive-text: #f1ede3;
+  --olive-muted: #d5d9c3;
+  --olive-border: #6e7a48;
+  --danger-bg: #3a201b;
+  --danger-text: #f2b8ac;
   color-scheme: dark;
 }
 

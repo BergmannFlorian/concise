@@ -1,0 +1,34 @@
+---
+/** "phone · email · website" line for a resolved contact (see resolveContact). */
+import { telHref, type ResolvedContact } from '../lib/content';
+
+interface Props {
+  contact: ResolvedContact;
+  class?: string;
+}
+const { contact: c, class: className } = Astro.props;
+const items = [
+  c.telephone && { href: telHref(c.telephone), label: c.telephone },
+  c.email && { href: `mailto:${c.email}`, label: c.email },
+  c.url && { href: c.url, label: `${c.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')} ↗` },
+].filter(Boolean) as { href: string; label: string }[];
+---
+
+{
+  items.length > 0 && (
+    <span class:list={['contact-links', className]}>
+      {items.map((item, i) => (
+        <>
+          {i > 0 && ' · '}
+          <a href={item.href}>{item.label}</a>
+        </>
+      ))}
+    </span>
+  )
+}
+
+<style>
+  .contact-links {
+    overflow-wrap: anywhere;
+  }
+</style>

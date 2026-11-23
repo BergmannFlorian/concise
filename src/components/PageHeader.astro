@@ -10,8 +10,10 @@ interface Props {
   parent?: { label: string; href: string };
   /** Smaller title, for long titles such as a single notice. */
   compact?: boolean;
+  /** Breadcrumb label when it differs from the title (e.g. "Vie quotidienne" vs "Vivre à Concise"). */
+  crumb?: string;
 }
-const { lang, title, intro, parent, compact = false } = Astro.props;
+const { lang, title, intro, parent, compact = false, crumb } = Astro.props;
 const t = useTranslations(lang);
 ---
 
@@ -20,7 +22,7 @@ const t = useTranslations(lang);
     <ol>
       <li><a href={localizePath('/', lang)}>{t('nav.home')}</a></li>
       {parent && <li><a href={parent.href}>{parent.label}</a></li>}
-      <li aria-current="page">{title}</li>
+      <li aria-current="page">{crumb ?? title}</li>
     </ol>
   </nav>
   <div class="head">

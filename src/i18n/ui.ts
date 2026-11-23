@@ -85,6 +85,15 @@ const fr = {
   'cat.securite': 'Sécurité',
   'cat.finances': 'Finances',
   'cat.avis': 'Avis',
+  'vie.sections': 'Rubriques',
+  'photo.soon': 'Photo à venir',
+  'contact.name': 'Nom',
+  'contact.email': 'Adresse e-mail',
+  'contact.subject': 'Sujet',
+  'contact.message': 'Message',
+  'contact.send': 'Envoyer',
+  'contact.mailtoNote': "L'envoi ouvre votre messagerie avec le message prêt à partir.",
+  'contact.from': 'De',
 } as const;
 
 export type UIKey = keyof typeof fr;
@@ -167,6 +176,15 @@ export const ui: Record<Lang, Partial<Record<UIKey, string>>> = {
     'cat.securite': 'Sicherheit',
     'cat.finances': 'Finanzen',
     'cat.avis': 'Mitteilungen',
+    'vie.sections': 'Rubriken',
+    'photo.soon': 'Foto folgt',
+    'contact.name': 'Name',
+    'contact.email': 'E-Mail-Adresse',
+    'contact.subject': 'Betreff',
+    'contact.message': 'Nachricht',
+    'contact.send': 'Senden',
+    'contact.mailtoNote': 'Beim Senden öffnet sich Ihr E-Mail-Programm mit der vorbereiteten Nachricht.',
+    'contact.from': 'Von',
   },
   en: {
     'meta.description': 'Website of the municipality of Concise: information, municipal services, official notices and village life.',
@@ -231,6 +249,15 @@ export const ui: Record<Lang, Partial<Record<UIKey, string>>> = {
     'cat.securite': 'Safety',
     'cat.finances': 'Finance',
     'cat.avis': 'Notices',
+    'vie.sections': 'Sections',
+    'photo.soon': 'Photo coming soon',
+    'contact.name': 'Name',
+    'contact.email': 'Email address',
+    'contact.subject': 'Subject',
+    'contact.message': 'Message',
+    'contact.send': 'Send',
+    'contact.mailtoNote': 'Sending opens your email app with the message ready to go.',
+    'contact.from': 'From',
   },
 };
 

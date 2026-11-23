@@ -1,0 +1,394 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import LocalLink from '../../components/LocalLink.astro';
+import HoursTable from '../../components/HoursTable.astro';
+import ContactLinks from '../../components/ContactLinks.astro';
+import { getLocalizedEntry, resolveContact } from '../../lib/content';
+import { langFromParam, langPaths, useTranslations } from '../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+const { entry } = await getLocalizedEntry('vie', lang);
+const d = entry.data;
+const biblioContact = await resolveContact(d.ecoles.bibliotheque.contact);
+
+const sections = [
+  { id: 'enfants', label: d.enfants.menu },
+  { id: 'ecoles', label: d.ecoles.menu },
+  { id: 'dechets', label: d.dechets.menu },
+  { id: 'village', label: d.village.menu },
+  { id: 'histoire', label: d.histoire.menu },
+];
+---
+
+<Base lang={lang} current="vie" title={d.titre} description={d.intro}>
+  <PageHeader lang={lang} title={d.titre} intro={d.intro} crumb={t('nav.vie')}>
+    <nav aria-label={t('vie.sections')} class="chips">
+      {sections.map((s) => <a href={`#${s.id}`} class="pill">{s.label}</a>)}
+    </nav>
+  </PageHeader>
+
+  <section id="enfants" class="container section first" aria-labelledby="h-enf">
+    <h2 id="h-enf" class="section-title">{d.enfants.titre}</h2>
+    <div class="kids">
+      {
+        d.enfants.cartes.map((c) => (
+          <LocalLink href={c.url} lang={lang} class="kid card">
+            <span class="eyebrow small">{c.surtitre}</span>
+            <span class="kid-title">{c.titre}</span>
+            <span class="kid-text">{c.texte}</span>
+          </LocalLink>
+        ))
+      }
+    </div>
+  </section>
+
+  <section id="ecoles" class="container section" aria-labelledby="h-eco">
+    <h2 id="h-eco" class="section-title">{d.ecoles.titre}</h2>
+    <div class="schools">
+      <LocalLink href={d.ecoles.ecoles.lien.url} lang={lang} class="school card">
+        <span class="school-title">{d.ecoles.ecoles.titre}</span>
+        <span class="school-text">{d.ecoles.ecoles.texte}</span>
+        <span class="school-more">{d.ecoles.ecoles.lien.label}</span>
+      </LocalLink>
+      <div class="library">
+        <h3 class="school-title">{d.ecoles.bibliotheque.titre}</h3>
+        <p class="school-text">{d.ecoles.bibliotheque.texte}</p>
+        <HoursTable lang={lang} hours={d.ecoles.bibliotheque.horaires} />
+        <p class="library-contact">
+          {biblioContact.nom}
+          {biblioContact.nom && ' · '}
+          <ContactLinks contact={biblioContact} />
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="dechets" class="container section" aria-labelledby="h-dec">
+    <div class="waste">
+      <div class="waste-head">
+        <h2 id="h-dec" class="section-title">{d.dechets.titre}</h2>
+        <p>{d.dechets.texte}</p>
+      </div>
+      <ul class="waste-cards">
+        {
+          d.dechets.cartes.map((c) => (
+            <li>
+              <span class="waste-value">{c.valeur}</span>
+              <span class="waste-title">{c.titre}</span>
+              <span class="waste-text">{c.texte}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="waste-foot">
+        {
+          d.dechets.document && (
+            <LocalLink href={d.dechets.document.url} lang={lang} class="waste-doc">
+              {d.dechets.document.label}
+            </LocalLink>
+          )
+        }
+        {d.dechets.remarque && <span class="waste-note">{d.dechets.remarque}</span>}
+      </div>
+    </div>
+  </section>
+
+  <section id="village" class="container section" aria-labelledby="h-vil">
+    <h2 id="h-vil" class="section-title">{d.village.titre}</h2>
+    <ul class="village">
+      {
+        d.village.liens.map((l) => (
+          <li>
+            <LocalLink href={l.url} lang={lang}>
+              <span class="village-text">
+                <span class="village-title">{l.titre}</span>
+                <span class="village-desc">{l.texte}</span>
+              </span>
+              <span class="arrow" aria-hidden="true">
+                →
+              </span>
+            </LocalLink>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section id="histoire" class="container section" aria-labelledby="h-his">
+    <h2 id="h-his" class="section-title">{d.histoire.titre}</h2>
+    <div class="history">
+      {
+        d.histoire.cartes.map((c) => (
+          <LocalLink href={c.url} lang={lang} class="history-card">
+            {c.image ? (
+              <img src={c.image} alt={c.photo} class="history-img" loading="lazy" />
+            ) : (
+              <span class="history-img placeholder" role="img" aria-label={`${c.photo} (${t('photo.soon')})`}>
+                <span aria-hidden="true">{t('photo.soon')}</span>
+              </span>
+            )}
+            <span class="history-title">{c.titre}</span>
+          </LocalLink>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .chips {
+    margin-top: 36px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .section {
+    padding-top: 88px;
+    scroll-margin-top: 16px;
+  }
+  .section.first {
+    padding-top: 72px;
+  }
+  .section > .section-title {
+    margin-bottom: 24px;
+  }
+  .eyebrow.small {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+
+  .kids {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .kid {
+    padding: 26px;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 130px;
+  }
+  .kid:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .kid-title {
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .kid-text {
+    font-size: 14px;
+    color: var(--text-3);
+    line-height: 1.5;
+  }
+
+  .schools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .school,
+  .library {
+    flex: 1 1 380px;
+    border-radius: 24px;
+    padding: clamp(24px, 3vw, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .school {
+    text-decoration: none;
+    color: var(--text);
+  }
+  .school:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .library {
+    background: var(--surface-3);
+  }
+  .school-title {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    font-weight: 500;
+  }
+  .school-text {
+    margin: 0;
+    font-size: 15px;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+  .school-more {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .library-contact {
+    margin: 4px 0 0;
+    font-size: 15px;
+  }
+
+  .waste {
+    background: var(--olive-bg);
+    color: var(--olive-text);
+    border-radius: var(--radius-lg);
+    padding: clamp(28px, 4vw, 48px);
+  }
+  .waste-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 48px;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 36px;
+  }
+  .waste-head p {
+    margin: 0;
+    max-width: 460px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--olive-muted);
+  }
+  .waste-cards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+  }
+  .waste-cards li {
+    background: var(--olive-card);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .waste-value {
+    font-family: var(--font-serif);
+    font-size: 40px;
+    line-height: 1;
+  }
+  .waste-title {
+    font-size: 17px;
+    font-weight: 500;
+  }
+  .waste-text {
+    font-size: 14px;
+    color: var(--olive-muted);
+    line-height: 1.5;
+  }
+  .waste-foot {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  /* Light pill on the olive block, in both themes. */
+  .waste-doc {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    background: #f6f3ec;
+    color: #1b2629;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .waste-doc:hover {
+    background: #ffffff;
+    color: #1b2629;
+  }
+  .waste-note {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    border: 1px solid var(--olive-border);
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .village {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .village a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--text);
+  }
+  .village a:hover .village-title,
+  .village a:hover .arrow {
+    color: var(--accent);
+  }
+  .village-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .village-title {
+    font-family: var(--font-serif);
+    font-size: clamp(24px, 2.5vw, 28px);
+  }
+  .village-desc {
+    font-size: 15px;
+    color: var(--text-3);
+  }
+  .arrow {
+    font-size: 24px;
+  }
+
+  .history {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .history-card {
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .history-card:hover .history-title {
+    color: var(--accent);
+  }
+  .history-img {
+    display: block;
+    width: 100%;
+    height: 240px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+  }
+  .placeholder {
+    background: var(--surface-3);
+    border: 1.5px dashed var(--pill-border-strong);
+    display: flex;
+    align-items: flex-end;
+    padding: 18px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .history-title {
+    font-family: var(--font-serif);
+    font-size: 24px;
+  }
+</style>

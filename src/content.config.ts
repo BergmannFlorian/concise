@@ -25,6 +25,15 @@ const icone = z.enum([
 
 const lien = z.object({ label: z.string(), url: z.string() });
 
+/** Opening hours row; weekday names are translated automatically. */
+const horaire = z.object({
+  jour: z.enum(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']),
+  heures: z.string(),
+});
+
+/** Big number + label (stats, capacities, prices). */
+const chiffre = z.object({ valeur: z.coerce.string(), libelle: z.string() });
+
 /** General municipality info (not translated; weekday names are translated automatically). */
 const commune = defineCollection({
   loader: glob({ pattern: '*.yaml', base: './src/content/commune' }),
@@ -35,12 +44,7 @@ const commune = defineCollection({
     urgences: z.string(),
     facebook: z.url(),
     siteOfficiel: z.url(),
-    guichet: z.array(
-      z.object({
-        jour: z.enum(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']),
-        heures: z.string(),
-      }),
-    ),
+    guichet: z.array(horaire),
   }),
 });
 
@@ -61,6 +65,8 @@ const contact = z.object({
   role: z.string().optional(),
   telephone: z.string().optional(),
   email: z.string().optional(),
+  /** Website (shown instead of / next to phone and email). */
+  url: z.string().optional(),
 });
 
 /** Municipal services: one Markdown file per service; the file body is the description. */
@@ -173,4 +179,112 @@ const politique = defineCollection({
   }),
 });
 
-export const collections = { commune, personnes, services, avis, seances, accueil, pilier, politique };
+/** Vie quotidienne page. Each section has a short `menu` label (chip) and a `titre` (heading). */
+const vie = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/vie' }),
+  schema: z.object({
+    titre: z.string(),
+    intro: z.string(),
+    enfants: z.object({
+      menu: z.string(),
+      titre: z.string(),
+      cartes: z.array(z.object({ surtitre: z.string(), titre: z.string(), texte: z.string(), url: z.string() })),
+    }),
+    ecoles: z.object({
+      menu: z.string(),
+      titre: z.string(),
+      ecoles: z.object({ titre: z.string(), texte: z.string(), lien }),
+      bibliotheque: z.object({
+        titre: z.string(),
+        texte: z.string(),
+        horaires: z.array(horaire),
+        contact,
+      }),
+    }),
+    dechets: z.object({
+      menu: z.string(),
+      titre: z.string(),
+      texte: z.string(),
+      cartes: z.array(z.object({ valeur: z.string(), titre: z.string(), texte: z.string() })),
+      document: lien.optional(),
+      remarque: z.string().optional(),
+    }),
+    village: z.object({
+      menu: z.string(),
+      titre: z.string(),
+      liens: z.array(z.object({ titre: z.string(), texte: z.string(), url: z.string() })),
+    }),
+    histoire: z.object({
+      menu: z.string(),
+      titre: z.string(),
+      cartes: z.array(
+        z.object({
+          titre: z.string(),
+          url: z.string(),
+          /** Image path in public/ (e.g. /images/eglise.jpg). Without it, a placeholder is shown. */
+          image: z.string().optional(),
+          /** Image description (alt text), or placeholder caption. */
+          photo: z.string(),
+        }),
+      ),
+    }),
+  }),
+});
+
+const lieu = z.object({
+  surtitre: z.string(),
+  titre: z.string(),
+  chiffres: z.array(chiffre).default([]),
+  texte: z.string().optional(),
+  documents: z.array(lien).default([]),
+  bouton: lien.optional(),
+  contact: contact.optional(),
+  image: z.string().optional(),
+  photo: z.string().optional(),
+});
+
+/** Locations page: main venue, secondary venues, other (non-municipal) places. */
+const locations = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/locations' }),
+  schema: z.object({
+    titre: z.string(),
+    intro: z.string(),
+    principal: lieu,
+    /** `style`: beige or lake-blue card. */
+    secondaires: z.array(lieu.extend({ style: z.enum(['beige', 'bleu']).default('beige') })).default([]),
+    autresTitre: z.string(),
+    autresIntro: z.string(),
+    autres: z.array(z.object({ nom: z.string(), description: z.string(), contact })).default([]),
+  }),
+});
+
+/** Contact page texts; address, phone and hours come from commune/infos.yaml. */
+const contactPage = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/contact' }),
+  schema: z.object({
+    titre: z.string(),
+    adresseTitre: z.string(),
+    guichetTitre: z.string(),
+    guichetNote: z.string(),
+    urgencesTitre: z.string(),
+    formTitre: z.string(),
+    sujets: z.array(z.string()),
+    formNote: z.string(),
+    directsTitre: z.string(),
+    directs: z.array(contact.extend({ libelle: z.string() })),
+  }),
+});
+
+export const collections = {
+  commune,
+  personnes,
+  services,
+  avis,
+  seances,
+  accueil,
+  pilier,
+  politique,
+  vie,
+  locations,
+  contact: contactPage,
+};

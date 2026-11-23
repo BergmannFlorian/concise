@@ -1,0 +1,49 @@
+---
+/** Opening hours as a two-column list (weekday names translated automatically). */
+import { weekdayName } from '../lib/content';
+import type { Lang } from '../i18n/ui';
+
+type Jour = Parameters<typeof weekdayName>[0];
+
+interface Props {
+  lang: Lang;
+  hours: { jour: Jour; heures: string }[];
+  /** Border colour token for the row separators. */
+  rule?: 'border' | 'rule';
+}
+const { lang, hours, rule = 'rule' } = Astro.props;
+---
+
+<dl class:list={['hours', `rule-${rule}`]}>
+  {
+    hours.map((h) => (
+      <div class="row">
+        <dt>{weekdayName(h.jour, lang)}</dt>
+        <dd>{h.heures}</dd>
+      </div>
+    ))
+  }
+</dl>
+
+<style>
+  .hours {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-size: 15px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .rule-border .row {
+    border-bottom-color: var(--border);
+  }
+  dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

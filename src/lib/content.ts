@@ -33,7 +33,9 @@ export async function getLocalized<C extends LocalizedCollection>(
 }
 
 /** Single entry per language (e.g. accueil/fr.md), falling back to French. */
-export async function getLocalizedEntry<C extends 'accueil' | 'pilier' | 'politique'>(collection: C, lang: Lang) {
+export async function getLocalizedEntry<
+  C extends 'accueil' | 'pilier' | 'politique' | 'vie' | 'locations' | 'contact',
+>(collection: C, lang: Lang) {
   const entry = (await getEntry(collection, lang)) ?? (await getEntry(collection, defaultLang));
   if (!entry) throw new Error(`Missing content: src/content/${collection}/${defaultLang}.md`);
   return { entry, fallback: entry.id !== lang };
@@ -99,3 +101,26 @@ export function weekdayName(jour: (typeof weekdays)[number], lang: Lang, style: 
 export function formatDate(date: Date, lang: Lang, options: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat(intlLocale[lang], { timeZone: 'Europe/Zurich', ...options }).format(date);
 }
+
+interface ContactInput {
+  personne?: { collection: 'personnes'; id: string };
+  nom?: string;
+  role?: string;
+  telephone?: string;
+  email?: string;
+  url?: string;
+}
+
+/** Merges a content contact with its referenced person (explicit fields win). */
+export async function resolveContact(c: ContactInput) {
+  const p = c.personne ? (await getEntry(c.personne))?.data : undefined;
+  return {
+    nom: c.nom ?? p?.nom,
+    role: c.role,
+    telephone: c.telephone ?? p?.telephone,
+    email: c.email ?? p?.email,
+    url: c.url,
+  };
+}
+
+export type ResolvedContact = Awaited<ReturnType<typeof resolveContact>>;
