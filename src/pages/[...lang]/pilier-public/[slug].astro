@@ -1,0 +1,118 @@
+---
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import PageHeader from '../../../components/PageHeader.astro';
+import LocalLink from '../../../components/LocalLink.astro';
+import { formatDate, getLocalized } from '../../../lib/content';
+import { defaultLang, langFromParam, langList, localizePath, useTranslations } from '../../../i18n/ui';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const lang of langList) {
+    for (const item of await getLocalized('avis', lang)) {
+      paths.push({
+        params: { lang: lang === defaultLang ? undefined : lang, slug: item.slug },
+        props: { item },
+      });
+    }
+  }
+  return paths;
+}
+
+const { item } = Astro.props;
+const { entry, fallback } = item;
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+const { Content } = await render(entry);
+const board = localizePath('/pilier-public', lang);
+const d = entry.data;
+---
+
+<Base lang={lang} current="pilier" title={d.titre} description={d.resume}>
+  <div lang={fallback ? 'fr' : undefined}>
+    <PageHeader lang={lang} title={d.titre} compact parent={{ label: t('nav.pilier'), href: board }} />
+  </div>
+
+  <article class="container notice">
+    <p class="meta">
+      <a href={`${board}?categorie=${d.categorie}`} class="cat">{t(`cat.${d.categorie}`)}</a>
+      <span>{t('pilier.published')} <time datetime={d.date.toISOString().slice(0, 10)}>
+        {formatDate(d.date, lang, { day: 'numeric', month: 'long', year: 'numeric' })}
+      </time></span>
+    </p>
+
+    {fallback && <p class="untranslated">{t('notTranslated')}</p>}
+
+    <div lang={fallback ? 'fr' : undefined}>
+      {d.resume && <p class="lead">{d.resume}</p>}
+      <div class="prose body">
+        <Content />
+      </div>
+      {
+        d.document && (
+          <LocalLink href={d.document.url} lang={lang} class="btn-primary doc">
+            {d.document.label}
+          </LocalLink>
+        )
+      }
+    </div>
+
+    <p class="back"><a href={board}>{t('pilier.back')}</a></p>
+  </article>
+</Base>
+
+<style>
+  .notice {
+    padding-top: 28px;
+  }
+  /* Readable line length, left-aligned with the page header. */
+  .notice > * {
+    max-width: 760px;
+  }
+  .meta {
+    margin: 0 0 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    align-items: baseline;
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .cat {
+    font-size: 12px;
+    color: var(--label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+  .cat:hover {
+    text-decoration: underline;
+    color: var(--label);
+  }
+  .untranslated {
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .lead {
+    margin: 0 0 20px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .body {
+    font-size: 17px;
+  }
+  .doc {
+    margin-top: 28px;
+  }
+  .back {
+    margin: 48px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-size: 15px;
+    font-weight: 500;
+  }
+</style>

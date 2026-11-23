@@ -36,15 +36,37 @@ Créez `src/content/avis/fr/mon-avis.md` :
 ```markdown
 ---
 titre: Fermeture de la route du lac
-categorie: Voirie
+categorie: avis
 date: 2026-12-01
 resume: La route sera fermée du 1er au 5 décembre.
+# Facultatif : un document joint (le placer dans public/documents/)
+document:
+  label: Télécharger l'avis officiel (PDF)
+  url: /documents/fermeture-route-du-lac.pdf
 ---
 
-Texte complet de l'avis (facultatif).
+Texte complet de l'avis.
 ```
 
-Les 4 avis les plus récents apparaissent automatiquement sur la page d'accueil.
+Le nom du fichier (`mon-avis`) devient l'adresse de la page : `/pilier-public/mon-avis`.
+Utilisez des minuscules, sans accents ni espaces (tirets à la place).
+
+**Catégories possibles** (champ `categorie`, à recopier tel quel) :
+
+| Valeur | Affichée comme |
+|---|---|
+| `conseil` | Conseil communal |
+| `elections` | Élections |
+| `environnement` | Environnement |
+| `sante-social` | Santé & social |
+| `culture-loisirs` | Culture & loisirs |
+| `securite` | Sécurité |
+| `finances` | Finances |
+| `avis` | Avis |
+
+Les avis sont triés par date, du plus récent au plus ancien. Les 4 plus récents apparaissent aussi
+sur la page d'accueil. Les textes de la page elle-même (introduction, encadrés, lien vers les archives)
+sont dans `src/content/pilier/fr.md` (et `de.md`, `en.md`).
 
 ## Changer une personne de contact
 

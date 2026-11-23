@@ -24,7 +24,7 @@ import. Do not go back to an `<img>`: the logo flickered on every page change.
 |---|---|---|
 | `Main.dc.html` | `/` | ✅ done ("Accueil" entry added first in the menu, not in the mockup) |
 | `Services.dc.html` | `/services` | ✅ done |
-| `PilierPublic.dc.html` | `/pilier-public` | ⏳ placeholder |
+| `PilierPublic.dc.html` | `/pilier-public` + `/pilier-public/<slug>` | ✅ done (one detail page per notice, not in the mockup) |
 | `Politique.dc.html` | `/politique` | ⏳ placeholder |
 | `VieQuotidienne.dc.html` | `/vie-quotidienne` | ⏳ placeholder |
 | `Locations.dc.html` | `/locations` | ⏳ placeholder |
@@ -41,6 +41,8 @@ entry from the `pending` list in that file.
   No Google Fonts (Swiss data protection, nLPD).
 - `npm run dev` (http://localhost:4321) · `npm run build` (= `astro check` + build, must stay at 0 errors/warnings) · `npm run preview`.
 - Environment: Windows, no Python installed, Node 24. `npx -y <package>` downloads are blocked by permissions.
+- The dev server keeps a stale content store when content files are deleted/recreated while it runs: restart it.
+  Stopping the background shell does not kill Node on Windows; use `npx astro dev stop` first.
 
 ## Architecture
 
@@ -76,7 +78,18 @@ src/
 ### Collections (`content.config.ts`)
 `commune` (infos.yaml), `personnes` (one yaml per person, referenced via `reference('personnes')`),
 `services` (fr/…), `avis` (fr/…, official notice board), `seances` (not translated, `organe` translated via UI strings),
-`accueil` (fr.md / de.md / en.md).
+`accueil` and `pilier` (one page-text file per language: fr.md / de.md / en.md, read with `getLocalizedEntry`).
+`avis.categorie` is a closed enum (`avisCategories` in `ui.ts`, labels = `cat.*` UI strings); notices can have
+an optional `document` link.
+
+### Notice board (`pages/[...lang]/pilier-public/`)
+- `index.astro`: next-session banner, search + category filters, list, sidebar boxes.
+- Filtering is **vanilla JS progressive enhancement**, not React: the server renders every notice; controls are
+  `hidden` until the script runs. Search matches accent-free text (`data-text`, normalised at build time).
+  The selected category is kept in `?categorie=<key>` (shareable; the detail page's category links use it).
+- `[slug].astro`: one page per notice per language (French fallback).
+- The 17 notices come from the mockup; their **dates are placeholders** (the mockup had none, order preserved)
+  and their bodies are "[Texte complet de l'avis à compléter.]".
 
 ## Design guidelines
 
@@ -87,8 +100,8 @@ src/
 
 ## Next steps
 
-1. Remaining pages from the mockup: Pilier public (filterable notice list → good candidate for a React island),
-   Politique (sessions, executive, council), Vie quotidienne, Locations, Contact.
+1. Remaining pages from the mockup: Politique (sessions, executive, council; the "next session" banners link
+   there), Vie quotidienne, Locations, Contact.
 2. Search (Pagefind, static); the mockup has a search button.
 3. DE/EN translations of services and notices.
 4. 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
@@ -98,3 +111,4 @@ src/
 - 2026-11-23: read the mockup; chose Astro + Markdown content + FR/DE/EN + dark theme.
   Foundation, home and services done; 5 placeholder pages. Build OK (21 pages, 0 errors).
   Then: "Accueil" menu entry, inlined coat of arms (flicker fix), scrollbar-gutter, all comments/docs in English + README.
+  First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors).

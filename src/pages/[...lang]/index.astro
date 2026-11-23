@@ -105,9 +105,9 @@ const contacts = await Promise.all(
         {
           avis.map(({ slug, entry, fallback }) => (
             <li>
-              <a href={`${localizePath('/pilier-public', lang)}#${slug}`} lang={fallback ? 'fr' : undefined}>
-                <span class="avis-cat">{entry.data.categorie}</span>
-                <span class="avis-text">
+              <a href={`${localizePath('/pilier-public', lang)}/${slug}`}>
+                <span class="avis-cat">{t(`cat.${entry.data.categorie}`)}</span>
+                <span class="avis-text" lang={fallback ? 'fr' : undefined}>
                   <span class="avis-title">{entry.data.titre}</span>
                   {entry.data.resume && <span class="avis-resume">{entry.data.resume}</span>}
                 </span>

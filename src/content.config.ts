@@ -8,6 +8,7 @@
 import { defineCollection, reference } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { avisCategories } from './i18n/ui';
 
 const icone = z.enum([
   'batiment',
@@ -86,9 +87,11 @@ const avis = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/avis' }),
   schema: z.object({
     titre: z.string(),
-    categorie: z.string(),
+    categorie: z.enum(avisCategories),
     date: z.coerce.date(),
     resume: z.string().optional(),
+    /** Optional attached document (PDF…), e.g. in public/documents/. */
+    document: lien.optional(),
   }),
 });
 
@@ -122,4 +125,24 @@ const accueil = defineCollection({
   }),
 });
 
-export const collections = { commune, personnes, services, avis, seances, accueil };
+/** Pilier public page texts (intro, sidebar boxes, archive link), one file per language. */
+const pilier = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/pilier' }),
+  schema: z.object({
+    intro: z.string(),
+    archives: lien.optional(),
+    encadres: z
+      .array(
+        z.object({
+          titre: z.string(),
+          texte: z.string(),
+          lien: lien.optional(),
+          /** true = beige background (highlight), false = white card. */
+          accent: z.boolean().default(false),
+        }),
+      )
+      .default([]),
+  }),
+});
+
+export const collections = { commune, personnes, services, avis, seances, accueil, pilier };

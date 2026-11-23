@@ -1,0 +1,411 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHeader from '../../../components/PageHeader.astro';
+import Icon from '../../../components/Icon.astro';
+import LocalLink from '../../../components/LocalLink.astro';
+import { formatDate, getLocalized, getLocalizedEntry, getNextSeance } from '../../../lib/content';
+import { avisCategories, langFromParam, langPaths, localizePath, useTranslations } from '../../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+
+const { entry: page } = await getLocalizedEntry('pilier', lang);
+const seance = await getNextSeance();
+
+const avis = (await getLocalized('avis', lang)).sort(
+  (a, b) => b.entry.data.date.getTime() - a.entry.data.date.getTime(),
+);
+
+/** Lower-case, accent-free text used by the client-side search ("election" matches "Élections"). */
+const normalize = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase();
+
+// Only show categories that actually have notices, in the canonical order.
+const usedCategories = avisCategories.filter((c) => avis.some((a) => a.entry.data.categorie === c));
+const base = localizePath('/pilier-public', lang);
+---
+
+<Base lang={lang} current="pilier" title={t('nav.pilier')} description={page.data.intro}>
+  <PageHeader lang={lang} title={t('nav.pilier')} intro={page.data.intro} />
+
+  {
+    seance && (
+      <section class="container featured-wrap">
+        <a href={localizePath('/politique', lang)} class="featured">
+          <span class="featured-main">
+            <span class="featured-date">{formatDate(seance.data.date, lang, { day: '2-digit', month: '2-digit' })}</span>
+            <span class="featured-text">
+              <span class="featured-label">{t('pilier.featured')}</span>
+              <span class="featured-title">{t(`seance.next.${seance.data.organe}`)}</span>
+              <span class="featured-meta">
+                {formatDate(seance.data.date, lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </span>
+          </span>
+          <span class="featured-cta">{t('pilier.agenda')}</span>
+        </a>
+      </section>
+    )
+  }
+
+  <section class="container layout">
+    <div class="board" data-board>
+      <div class="search" data-enhanced hidden>
+        <label for="recherche" class="visually-hidden">{t('pilier.searchLabel')}</label>
+        <Icon name="recherche" size={18} strokeWidth={2} />
+        <input id="recherche" type="search" placeholder={t('pilier.searchPlaceholder')} autocomplete="off" data-search />
+      </div>
+
+      <div class="filters" role="group" aria-label={t('pilier.filterLabel')} data-enhanced hidden>
+        <button type="button" class="filter" aria-pressed="true" data-filter="">{t('pilier.all')}</button>
+        {
+          usedCategories.map((c) => (
+            <button type="button" class="filter" aria-pressed="false" data-filter={c}>
+              {t(`cat.${c}`)}
+            </button>
+          ))
+        }
+      </div>
+
+      <p
+        class="count visually-hidden"
+        aria-live="polite"
+        data-count
+        data-one={t('pilier.count.one')}
+        data-other={t('pilier.count.other')}
+      >
+      </p>
+
+      <ul class="list">
+        {
+          avis.map(({ slug, entry, fallback }) => (
+            <li
+              data-item
+              data-cat={entry.data.categorie}
+              data-text={normalize(`${entry.data.titre} ${entry.data.resume ?? ''}`)}
+            >
+              <a href={`${base}/${slug}`}>
+                <span class="cat">{t(`cat.${entry.data.categorie}`)}</span>
+                <span class="text" lang={fallback ? 'fr' : undefined}>
+                  <span class="title">{entry.data.titre}</span>
+                  {entry.data.resume && <span class="resume">{entry.data.resume}</span>}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="empty" data-empty hidden>{t('pilier.empty')}</p>
+
+      {
+        page.data.archives && (
+          <p class="archives">
+            <LocalLink href={page.data.archives.url} lang={lang}>
+              {page.data.archives.label}
+            </LocalLink>
+          </p>
+        )
+      }
+    </div>
+
+    <aside class="aside">
+      {
+        page.data.encadres.map((box) => (
+          <div class:list={['box', { accent: box.accent }]}>
+            <h2>{box.titre}</h2>
+            <p>{box.texte}</p>
+            {box.lien && (
+              <LocalLink href={box.lien.url} lang={lang}>
+                {box.lien.label}
+              </LocalLink>
+            )}
+          </div>
+        ))
+      }
+    </aside>
+  </section>
+</Base>
+
+<script>
+  // Progressive enhancement: without JS every notice is listed and the controls stay hidden.
+  const board = document.querySelector<HTMLElement>('[data-board]');
+  if (board) {
+    const items = [...board.querySelectorAll<HTMLElement>('[data-item]')];
+    const buttons = [...board.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const search = board.querySelector<HTMLInputElement>('[data-search]')!;
+    const empty = board.querySelector<HTMLElement>('[data-empty]')!;
+    const count = board.querySelector<HTMLElement>('[data-count]')!;
+
+    const normalize = (s: string) =>
+      s
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase()
+        .trim();
+
+    const params = new URLSearchParams(location.search);
+    let category = params.get('categorie') ?? '';
+    if (!buttons.some((b) => b.dataset.filter === category)) category = '';
+
+    function apply() {
+      const query = normalize(search.value);
+      let visible = 0;
+      for (const item of items) {
+        const show =
+          (!category || item.dataset.cat === category) && (!query || (item.dataset.text ?? '').includes(query));
+        item.hidden = !show;
+        if (show) visible++;
+      }
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.filter === category));
+      empty.hidden = visible > 0;
+      const template = visible === 1 ? count.dataset.one : count.dataset.other;
+      count.textContent = (template ?? '').replace('{n}', String(visible));
+    }
+
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        category = b.dataset.filter ?? '';
+        const url = new URL(location.href);
+        if (category) url.searchParams.set('categorie', category);
+        else url.searchParams.delete('categorie');
+        history.replaceState(null, '', url);
+        apply();
+      });
+    }
+    search.addEventListener('input', apply);
+
+    board.querySelectorAll<HTMLElement>('[data-enhanced]').forEach((el) => (el.hidden = false));
+    apply();
+  }
+</script>
+
+<style>
+  .featured-wrap {
+    padding-top: 40px;
+  }
+  .featured {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 48px;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--feature-bg);
+    color: var(--feature-text);
+    border-radius: 24px;
+    padding: clamp(24px, 3vw, 32px) clamp(24px, 3vw, 36px);
+    text-decoration: none;
+  }
+  .featured:hover {
+    color: var(--feature-text);
+  }
+  .featured-main {
+    display: flex;
+    gap: 16px 28px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .featured-date {
+    font-family: var(--font-serif);
+    font-size: clamp(56px, 6vw, 72px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  .featured-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .featured-label {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--feature-label);
+  }
+  .featured-title {
+    font-size: clamp(20px, 2vw, 24px);
+    font-weight: 500;
+  }
+  .featured-meta {
+    font-size: 15px;
+    color: var(--feature-muted);
+  }
+  /* Always light pill on the blue card, in both themes. */
+  .featured-cta {
+    background: #f6f3ec;
+    color: #1b2629;
+    border-radius: 999px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .featured:hover .featured-cta {
+    background: #ffffff;
+  }
+
+  .layout {
+    padding-top: 48px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+    align-items: flex-start;
+  }
+  .board {
+    flex: 999 1 600px;
+    min-width: 0;
+  }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: 0 18px;
+    height: 48px;
+    margin-bottom: 16px;
+    color: var(--muted);
+  }
+  .search:focus-within {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .search[hidden],
+  .filters[hidden] {
+    display: none;
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    height: 44px;
+  }
+  .search input::placeholder {
+    color: var(--muted);
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .filter {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--pill-border);
+  }
+  .filter:hover {
+    border-color: var(--accent);
+  }
+  .filter[aria-pressed='true'] {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .list a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--text);
+    align-items: baseline;
+  }
+  .list a:hover .title {
+    color: var(--accent);
+  }
+  .cat {
+    flex: 0 0 160px;
+    font-size: 12px;
+    color: var(--label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .text {
+    flex: 1 1 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .title {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .resume {
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .empty {
+    font-size: 16px;
+    color: var(--text-3);
+    padding: 24px 0;
+    margin: 0;
+  }
+  .archives {
+    margin: 28px 0 0;
+    font-size: 15px;
+  }
+  .archives a {
+    font-weight: 500;
+  }
+
+  .aside {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .box.accent {
+    background: var(--surface-3);
+    border-color: var(--surface-3);
+  }
+  .box h2 {
+    font-size: 24px;
+  }
+  .box p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .box a {
+    font-weight: 500;
+    font-size: 15px;
+  }
+</style>

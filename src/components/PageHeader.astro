@@ -6,8 +6,12 @@ interface Props {
   lang: Lang;
   title: string;
   intro?: string;
+  /** Intermediate breadcrumb level (e.g. the notice board for a single notice). */
+  parent?: { label: string; href: string };
+  /** Smaller title, for long titles such as a single notice. */
+  compact?: boolean;
 }
-const { lang, title, intro } = Astro.props;
+const { lang, title, intro, parent, compact = false } = Astro.props;
 const t = useTranslations(lang);
 ---
 
@@ -15,11 +19,12 @@ const t = useTranslations(lang);
   <nav aria-label={t('breadcrumb')} class="breadcrumb">
     <ol>
       <li><a href={localizePath('/', lang)}>{t('nav.home')}</a></li>
+      {parent && <li><a href={parent.href}>{parent.label}</a></li>}
       <li aria-current="page">{title}</li>
     </ol>
   </nav>
   <div class="head">
-    <h1>{title}</h1>
+    <h1 class:list={{ compact }}>{title}</h1>
     {intro && <p>{intro}</p>}
   </div>
   <slot />
@@ -60,6 +65,12 @@ const t = useTranslations(lang);
     line-height: 1;
     letter-spacing: -0.025em;
     overflow-wrap: anywhere;
+  }
+  h1.compact {
+    font-size: clamp(32px, 4.5vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    max-width: 22ch;
   }
   p {
     margin: 0;

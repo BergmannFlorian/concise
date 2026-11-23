@@ -33,7 +33,7 @@ export async function getLocalized<C extends LocalizedCollection>(
 }
 
 /** Single entry per language (e.g. accueil/fr.md), falling back to French. */
-export async function getLocalizedEntry<C extends 'accueil'>(collection: C, lang: Lang) {
+export async function getLocalizedEntry<C extends 'accueil' | 'pilier'>(collection: C, lang: Lang) {
   const entry = (await getEntry(collection, lang)) ?? (await getEntry(collection, defaultLang));
   if (!entry) throw new Error(`Missing content: src/content/${collection}/${defaultLang}.md`);
   return { entry, fallback: entry.id !== lang };
