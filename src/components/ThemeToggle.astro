@@ -1,0 +1,84 @@
+---
+import Icon from './Icon.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const t = useTranslations(Astro.props.lang);
+---
+
+<button
+  type="button"
+  class="theme-toggle"
+  data-theme-toggle
+  data-label-dark={t('theme.toDark')}
+  data-label-light={t('theme.toLight')}
+  aria-label={t('theme.toDark')}
+>
+  <Icon name="lune" size={18} strokeWidth={2} class="icon-moon" />
+  <Icon name="soleil" size={18} strokeWidth={2} class="icon-sun" />
+</button>
+
+<script>
+  const root = document.documentElement;
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  const current = () => root.dataset.theme ?? (media.matches ? 'dark' : 'light');
+
+  function sync() {
+    const dark = current() === 'dark';
+    document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+      btn.setAttribute('aria-label', (dark ? btn.dataset.labelLight : btn.dataset.labelDark) ?? '');
+    });
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const next = current() === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem('theme', next);
+      } catch {}
+      sync();
+    });
+  });
+  media.addEventListener('change', sync);
+  sync();
+</script>
+
+<style>
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  /* Light theme shows the moon, dark theme shows the sun. */
+  .icon-sun {
+    display: none;
+  }
+  :global(:root[data-theme='dark']) .icon-sun {
+    display: block;
+  }
+  :global(:root[data-theme='dark']) .icon-moon {
+    display: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .icon-sun {
+      display: block;
+    }
+    :global(:root:not([data-theme='light'])) .icon-moon {
+      display: none;
+    }
+  }
+</style>

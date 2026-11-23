@@ -1,0 +1,63 @@
+---
+import { languages, langList, localizePath, stripLang, useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const basePath = stripLang(Astro.url.pathname);
+---
+
+<nav class="lang-switch" aria-label={t('lang.label')}>
+  <ul>
+    {
+      langList.map((l) => (
+        <li>
+          <a
+            href={localizePath(basePath, l)}
+            hreflang={l}
+            lang={l}
+            aria-current={l === lang ? 'true' : undefined}
+          >
+            <span aria-hidden="true">{l.toUpperCase()}</span>
+            <span class="visually-hidden">{languages[l]}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 3px;
+    display: flex;
+    border: 1px solid var(--pill-border);
+    border-radius: 22px;
+    height: 44px;
+    align-items: center;
+  }
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-3);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--accent);
+  }
+  a[aria-current='true'] {
+    background: var(--text);
+    color: var(--bg);
+  }
+</style>

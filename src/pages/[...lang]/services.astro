@@ -1,0 +1,283 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Icon from '../../components/Icon.astro';
+import LocalLink from '../../components/LocalLink.astro';
+import { getLocalized, telHref } from '../../lib/content';
+import { langFromParam, langPaths, useTranslations } from '../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+
+const services = await Promise.all(
+  (await getLocalized('services', lang))
+    .sort((a, b) => a.entry.data.ordre - b.entry.data.ordre)
+    .map(async ({ entry, fallback }) => {
+      const { Content } = await render(entry);
+      const contacts = await Promise.all(
+        entry.data.contacts.map(async (c) => {
+          const p = c.personne ? (await getEntry(c.personne))?.data : undefined;
+          return {
+            nom: c.nom ?? p?.nom,
+            role: c.role,
+            telephone: c.telephone ?? p?.telephone,
+            email: c.email ?? p?.email,
+          };
+        }),
+      );
+      return { data: entry.data, Content, contacts, fallback };
+    }),
+);
+---
+
+<Base lang={lang} current="services" title={t('services.title')}>
+  <PageHeader lang={lang} title={t('services.title')} intro={t('services.intro')}>
+    <nav aria-label={t('services.nav')} class="chips">
+      {services.map((s) => <a href={`#${s.data.ancre}`} class="pill">{s.data.titre}</a>)}
+    </nav>
+  </PageHeader>
+
+  <div class="container list">
+    {
+      services.map(({ data, Content, contacts, fallback }) => (
+        <article
+          id={data.ancre}
+          class:list={['service', { featured: data.miseEnAvant }]}
+          lang={fallback ? 'fr' : undefined}
+        >
+          <div class="main">
+            <span class="icon">
+              <Icon name={data.icone} size={26} />
+            </span>
+            <h2>{data.titre}</h2>
+            {fallback && (
+              <p class="untranslated" lang={lang}>
+                {t('notTranslated')}
+              </p>
+            )}
+            <div class="prose desc">
+              <Content />
+            </div>
+            {data.taches.length > 0 && (
+              <ul class="tasks">
+                {data.taches.map((task) => (
+                  <li>{task}</li>
+                ))}
+              </ul>
+            )}
+            {data.bouton && (
+              <LocalLink href={data.bouton.url} lang={lang} class="action">
+                {data.bouton.direct && <span class="live-dot" />}
+                {data.bouton.label}
+              </LocalLink>
+            )}
+          </div>
+
+          <div class="side">
+            {contacts.map((c) => (
+              <div class="person">
+                <span class="person-name">{c.nom}</span>
+                {c.role && <span class="person-role">{c.role}</span>}
+                <span class="person-links">
+                  {c.telephone && <a href={telHref(c.telephone)}>{c.telephone}</a>}
+                  {c.telephone && c.email && ' · '}
+                  {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
+                </span>
+              </div>
+            ))}
+            {data.encadres.map((box) =>
+              box.texte || box.titre ? (
+                <div class="box">
+                  {box.titre && <strong>{box.titre}</strong>}
+                  {box.texte && <span>{box.texte}</span>}
+                  {box.lien && (
+                    <LocalLink href={box.lien.url} lang={lang}>
+                      {box.lien.label}
+                    </LocalLink>
+                  )}
+                </div>
+              ) : (
+                box.lien && (
+                  <LocalLink href={box.lien.url} lang={lang} class="box box-link">
+                    {box.lien.label}
+                  </LocalLink>
+                )
+              ),
+            )}
+          </div>
+        </article>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .chips {
+    margin-top: 36px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .list {
+    padding-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .service {
+    scroll-margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: clamp(24px, 3.5vw, 40px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px 56px;
+  }
+  .main {
+    flex: 1 1 380px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  h2 {
+    font-size: clamp(28px, 3vw, 36px);
+  }
+  .untranslated {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .tasks {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-2);
+  }
+  .side {
+    flex: 1 1 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .person {
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .person-name {
+    font-size: 17px;
+    font-weight: 500;
+  }
+  .person-role {
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .person-links {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  .box {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .box strong {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .box-link {
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--accent);
+  }
+  .box-link:hover {
+    text-decoration: underline;
+  }
+  .action {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--live);
+  }
+
+  /* Featured service (e.g. the harbour): lake-blue card. */
+  .featured {
+    background: var(--feature-bg);
+    border-color: var(--feature-bg);
+    color: var(--feature-text);
+  }
+  .featured .icon {
+    background: var(--feature-chip);
+    color: var(--feature-text);
+  }
+  .featured .desc,
+  .featured .tasks,
+  .featured .person-role,
+  .featured .untranslated {
+    color: var(--feature-muted);
+  }
+  .featured .person {
+    border-top-color: var(--feature-rule);
+  }
+  .featured a {
+    color: var(--feature-text);
+  }
+  .featured .action {
+    background: var(--feature-text);
+    color: #1b2629;
+  }
+  .featured .action .live-dot {
+    background: #c0392b;
+  }
+  .featured .box {
+    background: transparent;
+    border-top: 1px solid var(--feature-rule);
+    border-radius: 0;
+    padding: 14px 0 0;
+    color: var(--feature-muted);
+  }
+  .featured .box strong {
+    color: var(--feature-text);
+    font-size: 17px;
+  }
+</style>

@@ -1,0 +1,71 @@
+---
+/** Inner page header: breadcrumb, large title, intro, then optional content (slot). */
+import { localizePath, useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  intro?: string;
+}
+const { lang, title, intro } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section class="container page-header">
+  <nav aria-label={t('breadcrumb')} class="breadcrumb">
+    <ol>
+      <li><a href={localizePath('/', lang)}>{t('nav.home')}</a></li>
+      <li aria-current="page">{title}</li>
+    </ol>
+  </nav>
+  <div class="head">
+    <h1>{title}</h1>
+    {intro && <p>{intro}</p>}
+  </div>
+  <slot />
+</section>
+
+<style>
+  .page-header {
+    padding-top: 40px;
+  }
+  .breadcrumb {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .breadcrumb ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .breadcrumb li + li::before {
+    content: '/';
+    margin: 0 8px;
+  }
+  .breadcrumb a {
+    color: var(--muted);
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 48px;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  h1 {
+    font-size: clamp(44px, 6vw, 80px);
+    line-height: 1;
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
+  }
+  p {
+    margin: 0;
+    max-width: 440px;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text-2);
+  }
+</style>

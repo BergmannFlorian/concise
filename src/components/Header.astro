@@ -1,0 +1,196 @@
+---
+import Armoiries from '../assets/armoiries.svg';
+import Icon from './Icon.astro';
+import LangSwitch from './LangSwitch.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { localizePath, navItems, useTranslations, type Lang, type PageKey } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  current: PageKey;
+}
+const { lang, current } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<header class="site-header container">
+  <a class="brand" href={localizePath('/', lang)}>
+    <!-- Inline SVG (not <img>): renders with the page, so it does not flicker on navigation. -->
+    <Armoiries class="coat" width={44} height={55} role="img" aria-label={t('brand.coatAlt')} />
+    <span class="brand-text">
+      <span class="brand-name">Concise</span>
+      <span class="brand-sub">{t('brand.sub')}</span>
+    </span>
+  </a>
+
+  <button type="button" class="menu-btn" aria-expanded="false" aria-controls="site-nav" data-menu-btn>
+    <Icon name="menu" size={20} strokeWidth={2} class="icon-open" />
+    <Icon name="fermer" size={20} strokeWidth={2} class="icon-close" />
+    <span>{t('nav.menu')}</span>
+  </button>
+
+  <div class="nav-wrap" id="site-nav">
+    <nav aria-label={t('nav.label')}>
+      {
+        navItems.map((item) => (
+          <a href={localizePath(item.path, lang)} aria-current={current === item.key ? 'page' : undefined}>
+            {t(item.label)}
+          </a>
+        ))
+      }
+    </nav>
+    <div class="actions">
+      <LangSwitch lang={lang} />
+      <ThemeToggle lang={lang} />
+      <a
+        class="btn-primary"
+        href={localizePath('/contact', lang)}
+        aria-current={current === 'contact' ? 'page' : undefined}>{t('nav.contact')}</a
+      >
+    </div>
+  </div>
+</header>
+
+<script>
+  const btn = document.querySelector<HTMLButtonElement>('[data-menu-btn]');
+  btn?.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && btn?.getAttribute('aria-expanded') === 'true') {
+      btn.setAttribute('aria-expanded', 'false');
+      btn.focus();
+    }
+  });
+</script>
+
+<style>
+  .site-header {
+    padding-block: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .brand :global(.coat) {
+    display: block;
+    flex-shrink: 0;
+    width: 44px;
+    height: 55px;
+  }
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .brand-name {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .brand-sub {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .nav-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 32px;
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 26px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  nav a {
+    color: var(--text);
+    text-decoration: none;
+    padding: 12px 0;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover {
+    color: var(--accent);
+  }
+  nav a[aria-current='page'] {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .menu-btn {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 22px;
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .menu-btn .icon-close {
+    display: none;
+  }
+
+  /* Mobile: collapsible menu (only when JS is active; otherwise everything stays visible). */
+  @media (max-width: 1080px) {
+    :global(html.js) .menu-btn {
+      display: inline-flex;
+    }
+    :global(html.js) .nav-wrap {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      border-top: 1px solid var(--rule);
+      padding-top: 8px;
+    }
+    :global(html.js) .menu-btn[aria-expanded='true'] ~ .nav-wrap {
+      display: flex;
+    }
+    .menu-btn[aria-expanded='true'] .icon-close {
+      display: block;
+    }
+    .menu-btn[aria-expanded='true'] .icon-open {
+      display: none;
+    }
+    nav {
+      flex-direction: column;
+      gap: 0;
+      font-size: 17px;
+    }
+    nav a {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    nav a[aria-current='page'] {
+      border-bottom-color: var(--rule);
+    }
+    .actions {
+      flex-wrap: wrap;
+      padding-block: 8px;
+    }
+  }
+</style>

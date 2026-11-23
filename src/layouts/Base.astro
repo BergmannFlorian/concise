@@ -1,0 +1,132 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/fraunces/opsz.css';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getCommune, telHref, weekdayName } from '../lib/content';
+import { langList, localizePath, stripLang, useTranslations, defaultLang, type Lang, type PageKey } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  title?: string;
+  description?: string;
+  current: PageKey;
+}
+
+const { lang, title, description, current } = Astro.props;
+const t = useTranslations(lang);
+const commune = await getCommune();
+const pageTitle = title ? `${title} · Concise` : 'Commune de Concise';
+const basePath = stripLang(Astro.url.pathname);
+const deskShort = commune.guichet.map((g) => `${weekdayName(g.jour, lang, 'short')} ${g.heures}`).join(' · ');
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description ?? t('meta.description')} />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/svg+xml" href="/armoiries.svg" />
+    {
+      langList.map((l) => (
+        <link rel="alternate" hreflang={l} href={new URL(localizePath(basePath, l), Astro.site)} />
+      ))
+    }
+    <link rel="alternate" hreflang="x-default" href={new URL(localizePath(basePath, defaultLang), Astro.site)} />
+    <meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#11181a" media="(prefers-color-scheme: dark)" />
+    <script is:inline>
+      // Before first paint: apply the saved theme (avoids a light → dark flash).
+      document.documentElement.classList.add('js');
+      try {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenu">{t('skip')}</a>
+
+    <div class="unofficial" role="note">
+      <div class="container">
+        <strong>{t('unofficial.title')}</strong>
+        <span>{t('unofficial.text')} <a href={commune.siteOfficiel}>concise.ch</a>.</span>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <div class="container">
+        <span>{t('topbar.desk')} {deskShort}</span>
+        <span class="topbar-right">
+          <span>{t('topbar.emergency')} <a href={telHref(commune.urgences)} class="strong">{commune.urgences}</a></span>
+          <a href={commune.facebook}>Facebook</a>
+        </span>
+      </div>
+    </div>
+
+    <Header lang={lang} current={current} />
+
+    <main id="contenu" tabindex="-1">
+      <slot />
+    </main>
+
+    <Footer lang={lang} />
+  </body>
+</html>
+
+<style>
+  .unofficial {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    font-size: 14px;
+    border-bottom: 1px solid var(--warn-border);
+  }
+  .unofficial .container {
+    padding-block: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .unofficial strong {
+    font-weight: 600;
+  }
+  .unofficial a {
+    color: var(--warn-text);
+    font-weight: 600;
+  }
+  .topbar {
+    background: var(--ink-bg);
+    color: var(--ink-text);
+    font-size: 13px;
+  }
+  .topbar .container {
+    padding-block: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .topbar-right {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .topbar a {
+    color: var(--ink-text);
+  }
+  .topbar a.strong {
+    color: var(--ink-strong);
+    font-weight: 600;
+  }
+  main:focus {
+    outline: none;
+  }
+</style>

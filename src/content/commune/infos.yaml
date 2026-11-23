@@ -1,0 +1,18 @@
+# Informations générales de la commune (affichées dans l'en-tête et le pied de page).
+adresse:
+  - Administration communale
+  - En Chenaux 8 · 1426 Concise
+telephone: 024 434 62 62
+email: greffe@concise.ch
+urgences: 024 434 62 66
+facebook: https://www.facebook.com/concisevd
+siteOfficiel: https://concise.ch
+
+# Horaires du guichet. Jours possibles : lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche
+guichet:
+  - jour: lundi
+    heures: 16h – 20h
+  - jour: mercredi
+    heures: 14h – 16h
+  - jour: vendredi
+    heures: 9h30 – 11h30

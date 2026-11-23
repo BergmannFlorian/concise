@@ -1,0 +1,494 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import LocalLink from '../../components/LocalLink.astro';
+import { getLocalized, getLocalizedEntry, getNextSeance, formatDate, telHref } from '../../lib/content';
+import { langFromParam, langPaths, localizePath, useTranslations } from '../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+
+const { entry: home } = await getLocalizedEntry('accueil', lang);
+const d = home.data;
+const { Content: VillageText } = await render(home);
+
+const avis = (await getLocalized('avis', lang))
+  .sort((a, b) => b.entry.data.date.getTime() - a.entry.data.date.getTime())
+  .slice(0, 4);
+
+const seance = await getNextSeance();
+
+const contacts = await Promise.all(
+  d.contacts.map(async (c) => ({ ...c, personne: (await getEntry(c.personne))?.data })),
+);
+---
+
+<Base lang={lang} current="home">
+  <section class="container hero">
+    <div class="hero-head">
+      <div class="hero-title">
+        <p class="eyebrow">{d.surtitre}</p>
+        <h1>{d.titre.split('\n').map((line, i) => (i === 0 ? line : <><br />{line}</>))}</h1>
+      </div>
+      <p class="hero-intro">{d.intro}</p>
+    </div>
+
+    <div class="hero-visual">
+      <svg viewBox="0 0 1200 460" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <rect width="1200" height="460" fill="#E4E9E1"></rect>
+        <circle cx="930" cy="120" r="54" fill="#F2D9A6"></circle>
+        <path d="M0 210 L120 150 L240 185 L380 120 L520 170 L660 110 L820 160 L980 105 L1100 150 L1200 130 L1200 300 L0 300 Z" fill="#9FB2A8"></path>
+        <path d="M0 250 L160 205 L320 235 L470 195 L640 240 L800 200 L960 230 L1200 190 L1200 320 L0 320 Z" fill="#6F877C"></path>
+        <path d="M0 300 C200 270 420 290 600 280 C820 268 1000 260 1200 270 L1200 460 L0 460 Z" fill="#5C6B2E"></path>
+        <g stroke="#4A5724" stroke-width="3" fill="none">
+          <path d="M0 318 C220 292 420 310 600 302 C820 290 1000 284 1200 292"></path>
+          <path d="M0 338 C220 314 420 332 600 324 C820 312 1000 306 1200 314"></path>
+          <path d="M0 358 C220 336 420 354 600 346 C820 334 1000 328 1200 336"></path>
+        </g>
+        <path d="M0 372 C300 362 900 362 1200 368 L1200 460 L0 460 Z" fill="#2E6A82"></path>
+        <g stroke="#7FA9B8" stroke-width="2" stroke-linecap="round">
+          <path d="M80 400 h120"></path><path d="M320 418 h80"></path><path d="M560 396 h160"></path><path d="M840 425 h90"></path><path d="M1000 404 h120"></path>
+        </g>
+        <g fill="#F6F3EC"><path d="M640 370 l14 -36 l3 36 Z"></path><path d="M630 372 h36 l-6 8 h-26 Z"></path></g>
+      </svg>
+      <div class="hero-links">
+        {
+          d.liensHero.map((l, i) => (
+            <LocalLink href={l.url} lang={lang} class:list={['hero-link', { secondary: i > 0 }]}>
+              {l.direct && <span class="live-dot" />}
+              {l.label}
+            </LocalLink>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="container block" aria-labelledby="acces">
+    <h2 id="acces" class="h-small">{d.raccourcisTitre}</h2>
+    <div class="shortcuts">
+      {
+        d.raccourcis.map((r) => (
+          <LocalLink href={r.url} lang={lang} class="shortcut card">
+            <Icon name={r.icone} size={26} />
+            <span>{r.label}</span>
+          </LocalLink>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="container block-lg" aria-labelledby="pilier">
+    <div class="section-head">
+      <h2 id="pilier" class="section-title">{d.pilierTitre}</h2>
+      <a href={localizePath('/pilier-public', lang)}>{t('home.allInfo')}</a>
+    </div>
+    <div class="pilier">
+      {
+        seance && (
+          <a href={localizePath('/politique', lang)} class="seance">
+            <span class="seance-label">{t('home.nextSession')}</span>
+            <span class="seance-body">
+              <span class="seance-date">{formatDate(seance.data.date, lang, { day: '2-digit', month: '2-digit' })}</span>
+              <span class="seance-organe">{t(`organe.${seance.data.organe}`)}</span>
+              <span class="seance-meta">
+                {`${formatDate(seance.data.date, lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${t('home.agenda')}`}
+              </span>
+            </span>
+          </a>
+        )
+      }
+      <ul class="avis-list">
+        {
+          avis.map(({ slug, entry, fallback }) => (
+            <li>
+              <a href={`${localizePath('/pilier-public', lang)}#${slug}`} lang={fallback ? 'fr' : undefined}>
+                <span class="avis-cat">{entry.data.categorie}</span>
+                <span class="avis-text">
+                  <span class="avis-title">{entry.data.titre}</span>
+                  {entry.data.resume && <span class="avis-resume">{entry.data.resume}</span>}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section id="village" class="container block-lg" aria-labelledby="village-title">
+    <div class="village">
+      <div class="village-text">
+        <h2 id="village-title" class="section-title">{d.villageTitre}</h2>
+        <div class="prose village-prose"><VillageText /></div>
+        <div class="village-links">
+          {d.villageLiens.map((l) => <LocalLink href={l.url} lang={lang} class="pill village-pill">{l.label}</LocalLink>)}
+        </div>
+      </div>
+      <dl class="stats">
+        {
+          d.chiffres.map((c) => (
+            <div class="stat">
+              <dt>{c.libelle}</dt>
+              <dd>{c.valeur}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section class="container block-lg" aria-labelledby="contacts">
+    <h2 id="contacts" class="section-title contacts-title">{t('home.contacts')}</h2>
+    <div class="contacts">
+      {
+        contacts.map((c) => (
+          <div class="contact card">
+            <span class="contact-label">{c.libelle}</span>
+            <span class="contact-name">{c.personne?.nom}</span>
+            <span class="contact-desc">{c.description}</span>
+            {c.personne?.telephone && <a href={telHref(c.personne.telephone)}>{c.personne.telephone}</a>}
+          </div>
+        ))
+      }
+    </div>
+    <div class="notes">
+      {
+        d.notes.map((n) => (
+          <p class="note">
+            <strong>{n.titre}</strong> {n.texte}
+            {n.lien && <LocalLink href={n.lien.url} lang={lang}>{n.lien.label}</LocalLink>}
+          </p>
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-top: 24px;
+  }
+  .hero-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    align-items: flex-end;
+  }
+  .hero-title {
+    flex: 1 1 480px;
+    min-width: 0;
+  }
+  .hero-title .eyebrow {
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(48px, 7vw, 96px);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+  }
+  .hero-intro {
+    flex: 1 1 340px;
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--text-2);
+    max-width: 460px;
+  }
+  .hero-visual {
+    margin-top: 40px;
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    height: clamp(300px, 38vw, 460px);
+  }
+  .hero-visual svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    filter: var(--illustration-filter);
+  }
+  .hero-links {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  /* Pills over the illustration: always light, whatever the theme. */
+  .hero-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    background: #f6f3ec;
+    color: #1b2629;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .hero-link.secondary {
+    background: rgba(246, 243, 236, 0.85);
+  }
+  .hero-link:hover {
+    color: #123a4c;
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: #c0392b;
+  }
+
+  .block {
+    padding-top: 72px;
+  }
+  .block-lg {
+    padding-top: 96px;
+  }
+  .h-small {
+    font-size: 32px;
+    margin-bottom: 24px;
+  }
+  .shortcuts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .shortcut {
+    border-radius: 18px;
+    padding: 22px;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    min-height: 120px;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.35;
+  }
+  .shortcut :global(svg) {
+    color: var(--accent);
+  }
+  .shortcut:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 28px;
+  }
+  .section-head a {
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .pilier {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .seance {
+    flex: 1 1 360px;
+    background: var(--feature-bg);
+    color: var(--feature-text);
+    border-radius: 24px;
+    padding: 36px;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 48px;
+    min-height: 340px;
+  }
+  .seance:hover {
+    color: var(--feature-text);
+  }
+  .seance-label {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--feature-label);
+  }
+  .seance-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .seance-date {
+    font-family: var(--font-serif);
+    font-size: 88px;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  .seance-organe {
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .seance-meta {
+    font-size: 15px;
+    color: var(--feature-muted);
+  }
+  .avis-list {
+    flex: 999 1 520px;
+    min-width: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .avis-list a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--text);
+  }
+  .avis-list a:hover .avis-title {
+    color: var(--accent);
+  }
+  .avis-cat {
+    flex: 0 0 140px;
+    font-size: 13px;
+    color: var(--label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-top: 3px;
+  }
+  .avis-text {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .avis-title {
+    font-size: 19px;
+    font-weight: 500;
+  }
+  .avis-resume {
+    font-size: 15px;
+    color: var(--text-3);
+  }
+
+  .village {
+    background: var(--surface-3);
+    border-radius: var(--radius-lg);
+    padding: clamp(28px, 4vw, 48px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+  }
+  .village-text {
+    flex: 1 1 380px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .village-prose {
+    font-size: 17px;
+  }
+  .village-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .village-pill {
+    border-color: var(--pill-border-strong);
+  }
+  .stats {
+    flex: 1 1 420px;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 24px;
+  }
+  .stat {
+    border-top: 2px solid var(--text);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .stat dd {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(36px, 4vw, 52px);
+    line-height: 1;
+  }
+  .stat dt {
+    font-size: 14px;
+    color: var(--text-3);
+    margin-top: 6px;
+  }
+
+  .contacts-title {
+    margin-bottom: 28px;
+  }
+  .contacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 16px;
+  }
+  .contact {
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .contact-label {
+    font-size: 13px;
+    color: var(--label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .contact-name {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .contact-desc {
+    font-size: 14px;
+    color: var(--text-3);
+    line-height: 1.5;
+  }
+  .contact a {
+    font-size: 15px;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .notes {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .note {
+    flex: 1 1 320px;
+    margin: 0;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-md);
+    padding: 26px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .note strong {
+    color: var(--text);
+  }
+</style>

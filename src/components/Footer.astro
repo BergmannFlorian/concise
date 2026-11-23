@@ -1,0 +1,89 @@
+---
+import { getCommune, telHref, weekdayName } from '../lib/content';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const commune = await getCommune();
+---
+
+<footer class="site-footer">
+  <div class="container cols">
+    <div class="col-main">
+      <span class="name">Concise</span>
+      <address>
+        {commune.adresse.map((line, i) => (i === 0 ? line : <><br />{line}</>))}
+      </address>
+    </div>
+    <div class="col">
+      <h2 class="col-title">{t('footer.contact')}</h2>
+      <a href={telHref(commune.telephone)}>{commune.telephone}</a>
+      <a href={`mailto:${commune.email}`}>{commune.email}</a>
+      <a href={commune.facebook}>Facebook</a>
+    </div>
+    <div class="col">
+      <h2 class="col-title">{t('footer.desk')}</h2>
+      {commune.guichet.map((g) => <span>{weekdayName(g.jour, lang)} {g.heures}</span>)}
+    </div>
+  </div>
+  <div class="container bottom">{t('footer.copyright')}</div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 112px;
+    background: var(--ink-bg);
+    color: var(--ink-text);
+  }
+  .cols {
+    padding-block: 64px 40px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: space-between;
+  }
+  .col-main {
+    flex: 1 1 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .name {
+    font-family: var(--font-serif);
+    font-size: 40px;
+    color: var(--ink-strong);
+  }
+  address {
+    font-style: normal;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .col {
+    flex: 1 1 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 15px;
+  }
+  .col-title {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+  }
+  .col a {
+    color: var(--ink-strong);
+  }
+  .bottom {
+    padding-block: 20px 32px;
+    border-top: 1px solid var(--ink-rule);
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+</style>
