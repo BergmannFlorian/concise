@@ -32,7 +32,7 @@ const contacts = await Promise.all(
     <div class="hero-head">
       <div class="hero-title">
         <p class="eyebrow">{d.surtitre}</p>
-        <h1>{d.titre.split('\n').map((line, i) => (i === 0 ? line : <><br />{line}</>))}</h1>
+        <h1 data-pagefind-meta={`title:${t('nav.home')} · Concise`}>{d.titre.split('\n').map((line, i) => (i === 0 ? line : <><br />{line}</>))}</h1>
       </div>
       <p class="hero-intro">{d.intro}</p>
     </div>

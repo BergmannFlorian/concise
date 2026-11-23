@@ -23,6 +23,11 @@ const t = useTranslations(lang);
     </span>
   </a>
 
+  <!-- Mobile search button (the desktop one lives in .actions). -->
+  <button type="button" class="icon-btn search-btn search-mobile" data-search-open aria-label={t('search.open')}>
+    <Icon name="recherche" size={18} strokeWidth={2} />
+  </button>
+
   <button type="button" class="menu-btn" aria-expanded="false" aria-controls="site-nav" data-menu-btn>
     <Icon name="menu" size={20} strokeWidth={2} class="icon-open" />
     <Icon name="fermer" size={20} strokeWidth={2} class="icon-close" />
@@ -40,6 +45,9 @@ const t = useTranslations(lang);
       }
     </nav>
     <div class="actions">
+      <button type="button" class="icon-btn search-btn search-desktop" data-search-open aria-label={t('search.open')}>
+        <Icon name="recherche" size={18} strokeWidth={2} />
+      </button>
       <LangSwitch lang={lang} />
       <ThemeToggle lang={lang} />
       <a
@@ -131,6 +139,32 @@ const t = useTranslations(lang);
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  /* Search needs JS: hidden without it; the mobile button only shows in the collapsed-menu layout. */
+  .search-btn {
+    display: none;
+  }
+  :global(html.js) .search-desktop {
+    display: inline-flex;
+  }
+  .search-mobile {
+    margin-left: auto;
+  }
   /* Contact button on the contact page: inverted (dark) instead of accent. */
   .actions .btn-primary[aria-current='page'] {
     background: var(--text);
@@ -161,6 +195,12 @@ const t = useTranslations(lang);
 
   /* Mobile: collapsible menu (only when JS is active; otherwise everything stays visible). */
   @media (max-width: 1080px) {
+    :global(html.js) .search-mobile {
+      display: inline-flex;
+    }
+    :global(html.js) .search-desktop {
+      display: none;
+    }
     :global(html.js) .menu-btn {
       display: inline-flex;
     }

@@ -4,6 +4,7 @@ import '@fontsource-variable/fraunces/opsz.css';
 import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Search from '../components/Search.astro';
 import { getCommune, telHref, weekdayName } from '../lib/content';
 import { langList, localizePath, stripLang, useTranslations, defaultLang, type Lang, type PageKey } from '../i18n/ui';
 
@@ -70,11 +71,12 @@ const deskShort = commune.guichet.map((g) => `${weekdayName(g.jour, lang, 'short
 
     <Header lang={lang} current={current} />
 
-    <main id="contenu" tabindex="-1">
+    <main id="contenu" tabindex="-1" data-pagefind-body>
       <slot />
     </main>
 
     <Footer lang={lang} />
+    <Search lang={lang} />
   </body>
 </html>
 

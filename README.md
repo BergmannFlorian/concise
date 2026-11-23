@@ -8,6 +8,7 @@ The official website remains [concise.ch](https://concise.ch).
 - Content in Markdown / YAML, editable by non-developers
 - French (default), German and English
 - Light and dark themes (follows the system setting, with a manual toggle)
+- Static full-text search with [Pagefind](https://pagefind.app), one index per language
 - Accessible and responsive, fonts self-hosted (no third-party requests)
 
 ## Getting started
@@ -17,9 +18,12 @@ Requirements: Node.js 22 or later.
 ```sh
 npm install
 npm run dev       # http://localhost:4321
-npm run build     # type-check + build into dist/
+npm run build     # type-check + build into dist/ + search index (dist/pagefind)
 npm run preview   # serve the built site
 ```
+
+Search only works on a built site (`npm run build && npm run preview`): the Pagefind index does not
+exist in `npm run dev`.
 
 ## Project structure
 

@@ -92,6 +92,10 @@ const fr = {
   'contact.send': 'Envoyer',
   'contact.mailtoNote': "L'envoi ouvre votre messagerie avec le message prêt à partir.",
   'contact.from': 'De',
+  'search.open': 'Rechercher sur le site',
+  'search.title': 'Rechercher',
+  'search.close': 'Fermer la recherche',
+  'search.unavailable': 'La recherche est disponible sur le site publié (index généré au build).',
 } as const;
 
 export type UIKey = keyof typeof fr;
@@ -181,6 +185,10 @@ export const ui: Record<Lang, Partial<Record<UIKey, string>>> = {
     'contact.send': 'Senden',
     'contact.mailtoNote': 'Beim Senden öffnet sich Ihr E-Mail-Programm mit der vorbereiteten Nachricht.',
     'contact.from': 'Von',
+    'search.open': 'Website durchsuchen',
+    'search.title': 'Suchen',
+    'search.close': 'Suche schliessen',
+    'search.unavailable': 'Die Suche ist auf der veröffentlichten Website verfügbar (Index wird beim Build erstellt).',
   },
   en: {
     'meta.description': 'Website of the municipality of Concise: information, municipal services, official notices and village life.',
@@ -252,6 +260,10 @@ export const ui: Record<Lang, Partial<Record<UIKey, string>>> = {
     'contact.send': 'Send',
     'contact.mailtoNote': 'Sending opens your email app with the message ready to go.',
     'contact.from': 'From',
+    'search.open': 'Search the site',
+    'search.title': 'Search',
+    'search.close': 'Close search',
+    'search.unavailable': 'Search is available on the published site (the index is generated at build time).',
   },
 };
 

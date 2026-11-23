@@ -1,0 +1,165 @@
+---
+/**
+ * Site search (Pagefind). The index is generated after `astro build` (`pagefind --site dist`), one per
+ * language (from <html lang>), so results always match the current language. Only <main data-pagefind-body>
+ * is indexed. The Pagefind UI script and stylesheet are loaded on first open only.
+ *
+ * Open buttons: any element with [data-search-open] (see Header). Requires JS: buttons are hidden without it.
+ */
+import Icon from './Icon.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const t = useTranslations(Astro.props.lang);
+---
+
+<dialog class="search-dialog" aria-labelledby="search-title" data-search-dialog>
+  <div class="search-head">
+    <h2 id="search-title">{t('search.title')}</h2>
+    <button type="button" class="search-close" data-search-close aria-label={t('search.close')}>
+      <Icon name="fermer" size={20} strokeWidth={2} />
+    </button>
+  </div>
+  <div id="pagefind-search" class="search-body"></div>
+  <p class="search-unavailable" data-search-unavailable hidden>{t('search.unavailable')}</p>
+</dialog>
+
+<script>
+  declare global {
+    interface Window {
+      PagefindUI?: new (options: Record<string, unknown>) => unknown;
+    }
+  }
+
+  const dialog = document.querySelector<HTMLDialogElement>('[data-search-dialog]');
+  let loading: Promise<void> | null = null;
+
+  function loadPagefind(): Promise<void> {
+    if (loading) return loading;
+    loading = new Promise<void>((resolve, reject) => {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = '/pagefind/pagefind-ui.css';
+      document.head.append(css);
+
+      const script = document.createElement('script');
+      script.src = '/pagefind/pagefind-ui.js';
+      script.onload = () => {
+        if (!window.PagefindUI) return reject(new Error('PagefindUI missing'));
+        new window.PagefindUI({
+          element: '#pagefind-search',
+          showSubResults: true,
+          showImages: false,
+          autofocus: true,
+        });
+        resolve();
+      };
+      script.onerror = () => reject(new Error('Pagefind index not found'));
+      document.head.append(script);
+    });
+    return loading;
+  }
+
+  async function open() {
+    if (!dialog) return;
+    dialog.showModal();
+    try {
+      await loadPagefind();
+      dialog.querySelector<HTMLInputElement>('input')?.focus();
+    } catch {
+      // Dev server: the index only exists after `npm run build`.
+      dialog.querySelector<HTMLElement>('[data-search-unavailable]')!.hidden = false;
+    }
+  }
+
+  document.querySelectorAll('[data-search-open]').forEach((btn) => btn.addEventListener('click', open));
+  dialog?.querySelector('[data-search-close]')?.addEventListener('click', () => dialog.close());
+  // Click on the backdrop closes the dialog.
+  dialog?.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
+</script>
+
+<style>
+  .search-dialog {
+    width: min(720px, calc(100vw - 32px));
+    max-height: min(80vh, 760px);
+    margin: 10vh auto auto;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 24px 64px rgb(0 0 0 / 0.25);
+  }
+  .search-dialog::backdrop {
+    background: rgb(17 24 26 / 0.55);
+  }
+  .search-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px 12px;
+    background: var(--surface);
+  }
+  .search-head h2 {
+    font-size: 26px;
+  }
+  .search-close {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    border: 1px solid var(--pill-border);
+    background: transparent;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .search-close:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .search-body {
+    /* Top padding leaves room for the input's focus outline, which the sticky header would otherwise cover. */
+    padding: 8px 24px 24px;
+  }
+  .search-unavailable {
+    margin: 0;
+    padding: 0 24px 24px;
+    font-size: 15px;
+    color: var(--text-3);
+  }
+
+  /* Pagefind UI theming: map its variables to the site tokens (follows light/dark automatically). */
+  .search-body {
+    --pagefind-ui-scale: 0.9;
+    --pagefind-ui-primary: var(--accent);
+    --pagefind-ui-text: var(--text);
+    --pagefind-ui-background: var(--bg);
+    --pagefind-ui-border: var(--pill-border);
+    --pagefind-ui-tag: var(--surface-2);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 12px;
+    --pagefind-ui-font: var(--font-sans);
+  }
+  .search-body :global(.pagefind-ui__result-link) {
+    color: var(--accent);
+  }
+  .search-body :global(.pagefind-ui__result-title) {
+    font-family: var(--font-serif);
+    font-weight: 500;
+  }
+  .search-body :global(mark) {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    border-radius: 2px;
+  }
+</style>

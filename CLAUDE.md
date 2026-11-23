@@ -39,7 +39,8 @@ All mockup pages are built. Photos in the mockup are placeholders: content suppo
 - No UI framework yet; add `@astrojs/react` only for a real interactive need (island).
 - Self-hosted fonts via Fontsource (`@fontsource-variable/inter`, `@fontsource-variable/fraunces/opsz.css`).
   No Google Fonts (Swiss data protection, nLPD).
-- `npm run dev` (http://localhost:4321) · `npm run build` (= `astro check` + build, must stay at 0 errors/warnings) · `npm run preview`.
+- `npm run dev` (http://localhost:4321) · `npm run build` (= `astro check` + `astro build` + `pagefind --site dist`,
+  must stay at 0 errors/warnings) · `npm run preview` (only way to try search locally: the index exists after a build).
 - Environment: Windows, no Python installed, Node 24. `npx -y <package>` downloads are blocked by permissions.
 - The dev server keeps a stale content store when content files are deleted/recreated while it runs: restart it.
   Stopping the background shell does not kill Node on Windows; use `npx astro dev stop` first.
@@ -114,6 +115,17 @@ an optional `document` link.
   (e.g. Netlify Forms) if messages should be received without the visitor's mail app.
 - The header Contact button is inverted (dark) when it is the current page.
 
+### Search (Pagefind)
+- `pagefind` (dev dependency) indexes `dist/` after the build: one index per language (from `<html lang>`),
+  so results always match the current language. Only `<main data-pagefind-body>` (Base layout) is indexed.
+- `components/Search.astro`: native `<dialog>` mounted in Base; opened by any `[data-search-open]` button
+  (Header: one in `.actions` on desktop, one next to the menu button on mobile; hidden without JS).
+  Pagefind's default UI (`/pagefind/pagefind-ui.js` + css) is loaded on first open, themed through
+  `--pagefind-ui-*` variables mapped to the site tokens (works in dark mode). In `npm run dev` the index is
+  missing, so the dialog shows `search.unavailable`.
+- Result titles come from each page's `<h1>`; the home page overrides it with `data-pagefind-meta="title:…"`.
+- To exclude an element from the index: `data-pagefind-ignore`.
+
 ## Design guidelines
 
 - Fonts: **Fraunces** (headings, 500–600) + **Inter** (body).
@@ -125,9 +137,8 @@ an optional `document` link.
 
 1. Replace placeholders: notice dates/bodies, session agendas, `#` links (archives, council links, schools,
    associations, PDFs…), photos.
-2. Search (Pagefind, static); the mockup has a search button.
-3. DE/EN translations of services and notices.
-4. Contact form backend (see above), 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
+2. DE/EN translations of services and notices.
+3. Contact form backend (see above), 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
    "Next session" is computed at build time → schedule a daily rebuild (e.g. cron-triggered deploy hook).
 
 ## Log
@@ -137,4 +148,5 @@ an optional `document` link.
   Then: "Accueil" menu entry, inlined coat of arms (flicker fix), scrollbar-gutter, all comments/docs in English + README.
   First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors), commit `5b1890b`.
   Then: Politique page + session pages (81 pages built, 0 errors), commit `42430ef`.
-  Then: Vie quotidienne (`1c80a94`), Locations (`6e28661`), Contact; placeholder route removed. All mockup pages done.
+  Then: Vie quotidienne (`1c80a94`), Locations (`6e28661`), Contact (`0e33dda`); placeholder route removed. All mockup pages done.
+  Then: Pagefind search (header button + dialog), verified with real queries against the built index (FR/DE/EN).
