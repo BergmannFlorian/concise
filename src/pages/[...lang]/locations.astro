@@ -1,0 +1,334 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import LocalLink from '../../components/LocalLink.astro';
+import ContactLinks from '../../components/ContactLinks.astro';
+import { getLocalizedEntry, resolveContact } from '../../lib/content';
+import { langFromParam, langPaths, useTranslations } from '../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+const { entry } = await getLocalizedEntry('locations', lang);
+const d = entry.data;
+
+const main = { ...d.principal, contact: d.principal.contact && (await resolveContact(d.principal.contact)) };
+const secondary = await Promise.all(
+  d.secondaires.map(async (l) => ({ ...l, contact: l.contact && (await resolveContact(l.contact)) })),
+);
+const others = await Promise.all(
+  d.autres.map(async (o) => ({ ...o, contact: await resolveContact(o.contact) })),
+);
+---
+
+<Base lang={lang} current="locations" title={d.titre} description={d.intro}>
+  <PageHeader lang={lang} title={d.titre} intro={d.intro} crumb={t('nav.locations')} />
+
+  <section class="container main-wrap" aria-labelledby="h-main">
+    <article class="main">
+      {
+        main.image ? (
+          <img src={main.image} alt={main.photo ?? ''} class="main-photo" />
+        ) : (
+          <div class="main-photo placeholder" role="img" aria-label={`${main.photo ?? main.titre} (${t('photo.soon')})`}>
+            <span aria-hidden="true">{t('photo.soon')}</span>
+          </div>
+        )
+      }
+      <div class="main-body">
+        <span class="eyebrow small">{main.surtitre}</span>
+        <h2 id="h-main" class="section-title">{main.titre}</h2>
+        {
+          main.chiffres.length > 0 && (
+            <dl class="figures">
+              {main.chiffres.map((c) => (
+                <div>
+                  <dt>{c.libelle}</dt>
+                  <dd>{c.valeur}</dd>
+                </div>
+              ))}
+            </dl>
+          )
+        }
+        {main.texte && <p class="text">{main.texte}</p>}
+        {
+          main.documents.length > 0 && (
+            <div class="docs">
+              {main.documents.map((doc) => (
+                <LocalLink href={doc.url} lang={lang} class="pill">
+                  {doc.label}
+                </LocalLink>
+              ))}
+            </div>
+          )
+        }
+        <div class="booking">
+          {
+            main.bouton && (
+              <LocalLink href={main.bouton.url} lang={lang} class="btn-primary">
+                {main.bouton.label}
+              </LocalLink>
+            )
+          }
+          {main.contact && <ContactLinks contact={main.contact} class="booking-contact" />}
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="container secondary">
+    {
+      secondary.map((l) => (
+        <article class:list={['venue', l.style]}>
+          <span class="eyebrow small venue-eyebrow">{l.surtitre}</span>
+          <h2 class="venue-title">{l.titre}</h2>
+          {l.chiffres.length > 0 && (
+            <dl class="venue-figures">
+              {l.chiffres.map((c) => (
+                <div>
+                  <dt>{c.libelle}</dt>
+                  <dd>{c.valeur}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {l.texte && <p class="venue-text">{l.texte}</p>}
+          {l.contact && <ContactLinks contact={l.contact} class="venue-contact" />}
+          {l.bouton && (
+            <LocalLink href={l.bouton.url} lang={lang} class="venue-link">
+              {l.bouton.label}
+            </LocalLink>
+          )}
+        </article>
+      ))
+    }
+  </section>
+
+  <section class="container others-wrap" aria-labelledby="h-others">
+    <h2 id="h-others" class="others-title">{d.autresTitre}</h2>
+    <p class="others-intro">{d.autresIntro}</p>
+    <ul class="others">
+      {
+        others.map((o) => (
+          <li>
+            <span class="other-main">
+              <span class="other-name">{o.nom}</span>
+              <span class="other-desc">{o.description}</span>
+            </span>
+            <span class="other-contact">
+              {o.contact.nom}
+              {o.contact.nom && (o.contact.telephone || o.contact.email || o.contact.url) && ' · '}
+              <ContactLinks contact={o.contact} />
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>
+
+<style>
+  .eyebrow.small {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  dl {
+    margin: 0;
+  }
+  dd {
+    margin: 0;
+  }
+
+  .main-wrap {
+    padding-top: 48px;
+  }
+  .main {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .main-photo {
+    flex: 1 1 420px;
+    min-width: 0;
+    min-height: 380px;
+    object-fit: cover;
+    display: block;
+  }
+  .placeholder {
+    background: var(--surface-3);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    padding: 22px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .main-body {
+    flex: 1 1 460px;
+    min-width: 0;
+    padding: clamp(24px, 3.5vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .figures > div {
+    border-top: 2px solid var(--text);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .figures dd {
+    font-family: var(--font-serif);
+    font-size: clamp(28px, 3vw, 36px);
+    line-height: 1;
+  }
+  .figures dt {
+    font-size: 13px;
+    color: var(--text-3);
+    margin-top: 4px;
+  }
+  .text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .docs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .booking {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .booking :global(.booking-contact) {
+    font-size: 14px;
+    color: var(--text-3);
+  }
+
+  .secondary {
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+    gap: 20px;
+  }
+  .venue {
+    border-radius: var(--radius-lg);
+    padding: clamp(24px, 3vw, 36px);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .venue.beige {
+    background: var(--surface-3);
+  }
+  .venue.bleu {
+    background: var(--feature-bg);
+    color: var(--feature-text);
+  }
+  .venue.bleu .venue-eyebrow {
+    color: var(--feature-label);
+  }
+  .venue-title {
+    font-size: clamp(28px, 3vw, 36px);
+  }
+  .venue-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .venue-figures > div {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+  .venue-figures dd {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    line-height: 1;
+  }
+  .venue-figures dt {
+    font-size: 13px;
+    color: var(--text-3);
+    margin-top: 4px;
+  }
+  .venue.bleu .venue-figures dt,
+  .venue.bleu .venue-text {
+    color: var(--feature-muted);
+  }
+  .venue-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-2);
+  }
+  .venue :global(.venue-contact) {
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .venue.bleu :global(a) {
+    color: var(--feature-text);
+  }
+  .venue-link {
+    align-self: flex-start;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .others-wrap {
+    padding-top: 88px;
+  }
+  .others-title {
+    font-size: clamp(28px, 3vw, 36px);
+    letter-spacing: -0.015em;
+    margin-bottom: 8px;
+  }
+  .others-intro {
+    margin: 0 0 20px;
+    font-size: 15px;
+    color: var(--text-3);
+  }
+  .others {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .others li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .other-main {
+    flex: 1 1 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .other-name {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .other-desc {
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .other-contact {
+    flex: 0 1 280px;
+    font-size: 15px;
+  }
+</style>
