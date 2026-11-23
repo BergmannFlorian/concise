@@ -70,5 +70,12 @@ redefined for the dark theme. Components never hard-code colours.
 
 ## Deployment
 
-`npm run build` outputs a fully static site in `dist/`, which can be hosted on any static host
-(Netlify, Cloudflare Pages, GitHub Pages…). Set the final domain in `astro.config.mjs` (`site`).
+The site is deployed to **GitHub Pages**: https://bergmannflorian.github.io/concise/
+
+The [Deploy to GitHub Pages](.github/workflows/deploy.yml) workflow builds and publishes the site on every
+push to `master`, on demand (Actions tab → *Run workflow*), and once a day (some content, such as the next
+council session, is computed at build time).
+
+The site is served under the `/concise` base path. To host it elsewhere (custom domain, Netlify,
+Cloudflare Pages…), build with `SITE_URL=https://your-domain BASE_PATH=/ npm run build`; `dist/` is a fully
+static site.

@@ -35,8 +35,23 @@ All mockup pages are built. Photos in the mockup are placeholders: content suppo
 
 ## Repository
 
-GitHub: https://github.com/BergmannFlorian/concise (**private**, branch `master`, remote `origin`).
+GitHub: https://github.com/BergmannFlorian/concise (**public**, branch `master`, remote `origin`).
 `gh` is logged in as BergmannFlorian. Commit/push only when the user asks.
+Commits use the GitHub noreply address (local `git config user.email` =
+`50400867+BergmannFlorian@users.noreply.github.com`); the user's personal email must not appear in the history.
+
+## Deployment (GitHub Pages)
+
+- Live site: **https://bergmannflorian.github.io/concise/** (project site → base path `/concise`).
+- `.github/workflows/deploy.yml`: on push to `master`, manual run, and daily at 03:17 UTC (refreshes the
+  build-time "next session"). Steps: `npm ci` → `npm run build` → upload `dist` → `actions/deploy-pages`.
+- Pages source = "GitHub Actions" (enabled via `gh api -X POST repos/BergmannFlorian/concise/pages -f build_type=workflow`).
+- `astro.config.mjs`: `site`/`base` default to GitHub Pages; override with env `SITE_URL` and `BASE_PATH=/`
+  for a custom domain or another host.
+- **Base path rule**: never hard-code a root URL. Pages → `localizePath()`; files/images from content →
+  `assetUrl()` / `LocalLink` (detects file extensions); other files → `withBase()`. `BASE` is '' or '/concise'.
+- GitHub Pages only serves the root `404.html`: in production it redirects `/concise/de/…` and `/concise/en/…`
+  to `/concise/<lang>/404.html` (script in `NotFound.astro`). `public/_redirects` is for Netlify only.
 
 ## Stack & commands
 
@@ -154,16 +169,17 @@ an optional `document` link.
 1. Replace placeholders: notice dates/bodies, session agendas, `#` links (archives, council links, schools,
    associations, PDFs…), photos.
 2. DE/EN translations of services and notices.
-3. Contact form backend (see above), deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
-   "Next session" is computed at build time → schedule a daily rebuild (e.g. cron-triggered deploy hook).
+3. Contact form backend (see above): GitHub Pages cannot receive forms (Formspree-like service needed).
+4. Possibly a Git-based CMS (Decap / Pages CMS) for editors.
 
 ## Log
 
 - 2026-11-23: read the mockup; chose Astro + Markdown content + FR/DE/EN + dark theme.
   Foundation, home and services done; 5 placeholder pages. Build OK (21 pages, 0 errors).
   Then: "Accueil" menu entry, inlined coat of arms (flicker fix), scrollbar-gutter, all comments/docs in English + README.
-  First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors), commit `5b1890b`.
-  Then: Politique page + session pages (81 pages built, 0 errors), commit `42430ef`.
-  Then: Vie quotidienne (`1c80a94`), Locations (`6e28661`), Contact (`0e33dda`); placeholder route removed. All mockup pages done.
+  First commit `54f8f9b`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors), commit `116c42e`.
+  Then: Politique page + session pages (81 pages built, 0 errors), commit `cda59fb`.
+  Then: Vie quotidienne (`5f2b093`), Locations (`e92ec0a`), Contact (`2ab1c50`); placeholder route removed. All mockup pages done.
   Then: Pagefind search (header button + dialog), verified with real queries against the built index (FR/DE/EN),
-  commit `5d3cf27`. Then: localized 404 pages (84 pages built, 81 indexed).
+  commit `750dccb`. Then: localized 404 pages (84 pages built, 81 indexed), commit `416738c`.
+  Then: GitHub Pages deployment (base path `/concise`), history rewritten to the noreply email, repo made public.
