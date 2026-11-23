@@ -1,0 +1,18 @@
+---
+/**
+ * German / English "page not found" pages. Astro emits them as /de/404/index.html; the `localized404`
+ * integration (astro.config.mjs) moves them to /de/404.html and /en/404.html, where hosts look for them
+ * (Cloudflare Pages: nearest 404.html; Netlify: rules in public/_redirects).
+ * French is handled by src/pages/404.astro.
+ */
+import NotFound from '../../components/NotFound.astro';
+import { defaultLang, langFromParam, langList } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return langList.filter((l) => l !== defaultLang).map((lang) => ({ params: { lang } }));
+}
+
+const lang = langFromParam(Astro.params.lang);
+---
+
+<NotFound lang={lang} />

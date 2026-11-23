@@ -96,6 +96,12 @@ const fr = {
   'search.title': 'Rechercher',
   'search.close': 'Fermer la recherche',
   'search.unavailable': 'La recherche est disponible sur le site publié (index généré au build).',
+  'error.code': "Erreur 404",
+  'error.title': "Page introuvable",
+  'error.text': "La page que vous cherchez n'existe pas ou a été déplacée. Vérifiez l'adresse, ou poursuivez depuis l'une des pages ci-dessous.",
+  'error.home': "Retour à l'accueil",
+  'error.search': "Rechercher sur le site",
+  'error.useful': "Pages utiles",
 } as const;
 
 export type UIKey = keyof typeof fr;
@@ -189,6 +195,12 @@ export const ui: Record<Lang, Partial<Record<UIKey, string>>> = {
     'search.title': 'Suchen',
     'search.close': 'Suche schliessen',
     'search.unavailable': 'Die Suche ist auf der veröffentlichten Website verfügbar (Index wird beim Build erstellt).',
+    'error.code': "Fehler 404",
+    'error.title': "Seite nicht gefunden",
+    'error.text': "Die gesuchte Seite existiert nicht oder wurde verschoben. Prüfen Sie die Adresse oder fahren Sie mit einer der folgenden Seiten fort.",
+    'error.home': "Zur Startseite",
+    'error.search': "Website durchsuchen",
+    'error.useful': "Nützliche Seiten",
   },
   en: {
     'meta.description': 'Website of the municipality of Concise: information, municipal services, official notices and village life.',
@@ -264,6 +276,12 @@ export const ui: Record<Lang, Partial<Record<UIKey, string>>> = {
     'search.title': 'Search',
     'search.close': 'Close search',
     'search.unavailable': 'Search is available on the published site (the index is generated at build time).',
+    'error.code': "Error 404",
+    'error.title': "Page not found",
+    'error.text': "The page you are looking for does not exist or has moved. Check the address, or continue from one of the pages below.",
+    'error.home': "Back to the home page",
+    'error.search': "Search the site",
+    'error.useful': "Useful pages",
   },
 };
 

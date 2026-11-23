@@ -126,6 +126,17 @@ an optional `document` link.
 - Result titles come from each page's `<h1>`; the home page overrides it with `data-pagefind-meta="title:…"`.
 - To exclude an element from the index: `data-pagefind-ignore`.
 
+### Error pages (404)
+- Static site → only a 404 is needed (no server, so no 500). Content lives in `components/NotFound.astro`
+  (title, text, home button, search button, useful links), rendered by `pages/404.astro` (FR → `/404.html`,
+  also the page `astro dev` shows for any unknown URL) and `pages/[...lang]/404.astro` (DE/EN).
+- Astro emits `/de/404/index.html`; the `localized404` integration in `astro.config.mjs` moves it to
+  `/de/404.html` (same for `en`) after the build. Hosts: Cloudflare Pages picks the nearest `404.html`
+  automatically; Netlify uses `public/_redirects`.
+- `Base` with `errorPage`: no nav highlight, no hreflang, not indexed by Pagefind (no `data-pagefind-body`),
+  language switcher → each language's home page.
+- Use JSX comments `{/* */}` in `.astro` markup: HTML comments `<!-- -->` are shipped to visitors.
+
 ## Design guidelines
 
 - Fonts: **Fraunces** (headings, 500–600) + **Inter** (body).
@@ -138,7 +149,7 @@ an optional `document` link.
 1. Replace placeholders: notice dates/bodies, session agendas, `#` links (archives, council links, schools,
    associations, PDFs…), photos.
 2. DE/EN translations of services and notices.
-3. Contact form backend (see above), 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
+3. Contact form backend (see above), deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
    "Next session" is computed at build time → schedule a daily rebuild (e.g. cron-triggered deploy hook).
 
 ## Log
@@ -149,4 +160,5 @@ an optional `document` link.
   First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors), commit `5b1890b`.
   Then: Politique page + session pages (81 pages built, 0 errors), commit `42430ef`.
   Then: Vie quotidienne (`1c80a94`), Locations (`6e28661`), Contact (`0e33dda`); placeholder route removed. All mockup pages done.
-  Then: Pagefind search (header button + dialog), verified with real queries against the built index (FR/DE/EN).
+  Then: Pagefind search (header button + dialog), verified with real queries against the built index (FR/DE/EN),
+  commit `5d3cf27`. Then: localized 404 pages (84 pages built, 81 indexed).

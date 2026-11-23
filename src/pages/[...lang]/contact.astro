@@ -49,11 +49,11 @@ const addressLines = commune.adresse.slice(1).flatMap((l) => l.split(' · '));
     </div>
 
     <div class="form-card">
-      <!--
+      {/*
         Static site: the form composes an email in the visitor's mail app (mailto).
         Without JS, the browser's native mailto form submission is used as a fallback.
         To receive messages directly, plug a form backend at deployment (e.g. Netlify Forms).
-      -->
+      */}
       <form
         class="form"
         action={`mailto:${commune.email}`}

@@ -3,10 +3,12 @@ import { languages, langList, localizePath, stripLang, useTranslations, type Lan
 
 interface Props {
   lang: Lang;
+  /** Language-neutral path to link to (defaults to the current page). */
+  path?: string;
 }
-const { lang } = Astro.props;
+const { lang, path } = Astro.props;
 const t = useTranslations(lang);
-const basePath = stripLang(Astro.url.pathname);
+const basePath = path ?? stripLang(Astro.url.pathname);
 ---
 
 <nav class="lang-switch" aria-label={t('lang.label')}>

@@ -1,0 +1,4 @@
+# Netlify: show the "page not found" page in the visitor's language.
+# (Non-forced rules: they only apply when no file matches the URL.)
+/de/*  /de/404.html  404
+/en/*  /en/404.html  404
