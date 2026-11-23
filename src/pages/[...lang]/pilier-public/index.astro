@@ -3,7 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import PageHeader from '../../../components/PageHeader.astro';
 import Icon from '../../../components/Icon.astro';
 import LocalLink from '../../../components/LocalLink.astro';
-import { formatDate, getLocalized, getLocalizedEntry, getNextSeance } from '../../../lib/content';
+import { formatDate, getLocalized, getLocalizedEntry, getNextSeance, seanceHref } from '../../../lib/content';
 import { avisCategories, langFromParam, langPaths, localizePath, useTranslations } from '../../../i18n/ui';
 
 export const getStaticPaths = langPaths;
@@ -36,7 +36,7 @@ const base = localizePath('/pilier-public', lang);
   {
     seance && (
       <section class="container featured-wrap">
-        <a href={localizePath('/politique', lang)} class="featured">
+        <a href={seanceHref(seance.id, lang)} class="featured">
           <span class="featured-main">
             <span class="featured-date">{formatDate(seance.data.date, lang, { day: '2-digit', month: '2-digit' })}</span>
             <span class="featured-text">

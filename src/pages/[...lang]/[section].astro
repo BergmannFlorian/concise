@@ -11,7 +11,6 @@ import { langList, defaultLang, langFromParam, useTranslations, type PageKey, ty
 export function getStaticPaths() {
   // (defined here: getStaticPaths cannot see variables from the rest of the frontmatter)
   const pending: { slug: string; key: PageKey; label: UIKey }[] = [
-    { slug: 'politique', key: 'politique', label: 'nav.politique' },
     { slug: 'vie-quotidienne', key: 'vie', label: 'nav.vie' },
     { slug: 'locations', key: 'locations', label: 'nav.locations' },
     { slug: 'contact', key: 'contact', label: 'nav.contact' },

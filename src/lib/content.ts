@@ -1,5 +1,5 @@
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
-import { defaultLang, intlLocale, type Lang } from '../i18n/ui';
+import { defaultLang, intlLocale, localizePath, type Lang } from '../i18n/ui';
 
 type LocalizedCollection = 'services' | 'avis';
 
@@ -33,7 +33,7 @@ export async function getLocalized<C extends LocalizedCollection>(
 }
 
 /** Single entry per language (e.g. accueil/fr.md), falling back to French. */
-export async function getLocalizedEntry<C extends 'accueil' | 'pilier'>(collection: C, lang: Lang) {
+export async function getLocalizedEntry<C extends 'accueil' | 'pilier' | 'politique'>(collection: C, lang: Lang) {
   const entry = (await getEntry(collection, lang)) ?? (await getEntry(collection, defaultLang));
   if (!entry) throw new Error(`Missing content: src/content/${collection}/${defaultLang}.md`);
   return { entry, fallback: entry.id !== lang };
@@ -45,14 +45,41 @@ export async function getCommune() {
   return entry.data;
 }
 
-/** Next upcoming session (evaluated at build time). */
-export async function getNextSeance() {
+type Organe = CollectionEntry<'seances'>['data']['organe'];
+
+function startOfToday() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+/** Next upcoming session, optionally for one body only (evaluated at build time). */
+export async function getNextSeance(organe?: Organe) {
+  const today = startOfToday();
   const seances = await getCollection('seances');
   return seances
-    .filter((s) => s.data.date >= today)
+    .filter((s) => s.data.date >= today && (!organe || s.data.organe === organe))
     .sort((a, b) => a.data.date.getTime() - b.data.date.getTime())[0];
+}
+
+/** Past sessions, most recent first. */
+export async function getPastSeances(organe?: Organe) {
+  const today = startOfToday();
+  const seances = await getCollection('seances');
+  return seances
+    .filter((s) => s.data.date < today && (!organe || s.data.organe === organe))
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+}
+
+/** URL of a session page (agenda, documents). */
+export function seanceHref(id: string, lang: Lang) {
+  return localizePath(`/politique/seances/${id}`, lang);
+}
+
+/** Initials for an avatar: 'Marc-André Burdet' → 'MB'. */
+export function initials(name: string) {
+  const parts = name.split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
 }
 
 export function telHref(phone: string) {

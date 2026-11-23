@@ -1,0 +1,114 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../../../layouts/Base.astro';
+import PageHeader from '../../../../components/PageHeader.astro';
+import LocalLink from '../../../../components/LocalLink.astro';
+import { formatDate } from '../../../../lib/content';
+import { defaultLang, langFromParam, langList, localizePath, useTranslations } from '../../../../i18n/ui';
+
+export async function getStaticPaths() {
+  const seances = await getCollection('seances');
+  return langList.flatMap((lang) =>
+    seances.map((seance) => ({
+      params: { lang: lang === defaultLang ? undefined : lang, id: seance.id },
+      props: { seance },
+    })),
+  );
+}
+
+const { seance } = Astro.props;
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+const { Content } = await render(seance);
+const d = seance.data;
+
+const dateLabel = formatDate(d.date, lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const title = `${t(`seance.title.${d.organe}`)} – ${formatDate(d.date, lang, { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+const politique = localizePath('/politique', lang);
+// Session content (agenda, documents) is only written in French.
+const notFrench = lang !== defaultLang;
+---
+
+<Base lang={lang} current="politique" title={title}>
+  <PageHeader
+    lang={lang}
+    title={title}
+    compact
+    parent={{ label: t('nav.politique'), href: `${politique}#legislatif` }}
+  />
+
+  <article class="container session">
+    <p class="when"><time datetime={d.date.toISOString().slice(0, 10)}>{dateLabel}</time></p>
+
+    <h2>{t('seance.agenda')}</h2>
+    {notFrench && <p class="untranslated">{t('notTranslated')}</p>}
+    <div class="prose" lang={notFrench ? 'fr' : undefined}>
+      <Content />
+    </div>
+
+    {
+      d.documents.length > 0 && (
+        <>
+          <h2>{t('seance.documents')}</h2>
+          <ul class="docs" lang={notFrench ? 'fr' : undefined}>
+            {d.documents.map((doc) => (
+              <li>
+                <LocalLink href={doc.url} lang={lang}>
+                  {doc.label}
+                </LocalLink>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    <p class="back"><a href={`${politique}#legislatif`}>{t('seance.back')}</a></p>
+  </article>
+</Base>
+
+<style>
+  .session {
+    padding-top: 20px;
+  }
+  .session > * {
+    max-width: 760px;
+  }
+  .when {
+    margin: 0 0 40px;
+    font-size: 18px;
+    color: var(--text-2);
+  }
+  .when::first-letter {
+    text-transform: uppercase;
+  }
+  h2 {
+    font-size: 28px;
+    margin: 0 0 16px;
+  }
+  .prose {
+    font-size: 17px;
+  }
+  .prose + h2 {
+    margin-top: 40px;
+  }
+  .untranslated {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .docs {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .back {
+    margin: 48px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-size: 15px;
+    font-weight: 500;
+  }
+</style>

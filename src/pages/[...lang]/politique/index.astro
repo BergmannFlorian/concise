@@ -1,0 +1,390 @@
+---
+import { getEntry } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import PageHeader from '../../../components/PageHeader.astro';
+import LocalLink from '../../../components/LocalLink.astro';
+import NextSessionCard from '../../../components/NextSessionCard.astro';
+import {
+  formatDate,
+  getLocalized,
+  getLocalizedEntry,
+  getNextSeance,
+  getPastSeances,
+  initials,
+  seanceHref,
+} from '../../../lib/content';
+import { langFromParam, langPaths, localizePath, useTranslations } from '../../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+
+const { entry: page } = await getLocalizedEntry('politique', lang);
+const d = page.data;
+
+const membres = await Promise.all(
+  d.membres.map(async (m) => ({ ...m, nom: (await getEntry(m.personne))?.data.nom ?? '' })),
+);
+
+const nextConseil = await getNextSeance('conseil');
+
+// "Recent sessions and elections": past council sessions + election notices, newest first.
+const pastSeances = (await getPastSeances('conseil')).map((s) => ({
+  date: s.data.date,
+  href: seanceHref(s.id, lang),
+  kind: 'seance' as const,
+  title: t('seance.title.conseil'),
+  fallback: false,
+}));
+const elections = (await getLocalized('avis', lang))
+  .filter((a) => a.entry.data.categorie === 'elections')
+  .map((a) => ({
+    date: a.entry.data.date,
+    href: `${localizePath('/pilier-public', lang)}/${a.slug}`,
+    kind: 'election' as const,
+    // The mockup drops the redundant "Élections générales 2026 –" prefix.
+    title: a.entry.data.titre.replace(/^Élections générales \d{4}\s*–\s*/, ''),
+    fallback: a.fallback,
+  }));
+const recents = [...pastSeances, ...elections].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 6);
+---
+
+<Base lang={lang} current="politique" title={t('nav.politique')} description={d.intro}>
+  <PageHeader lang={lang} title={t('nav.politique')} intro={d.intro}>
+    <div class="branches">
+      {
+        [
+          { id: 'executif', c: d.executif },
+          { id: 'legislatif', c: d.legislatif },
+        ].map(({ id, c }) => (
+          <a href={`#${id}`} class="branch">
+            <span class="eyebrow">{c.surtitre}</span>
+            <span class="branch-title">{c.titre}</span>
+            <span class="branch-text">{c.texte}</span>
+          </a>
+        ))
+      }
+    </div>
+  </PageHeader>
+
+  <section id="executif" class="container section" aria-labelledby="h-exec">
+    <h2 id="h-exec" class="section-title">{d.executif.titre}</h2>
+    <p class="section-intro">{d.municipaliteIntro}</p>
+
+    <ul class="members">
+      {
+        membres.map((m) => (
+          <li class="member">
+            <span class:list={['avatar', { principal: m.principal }]} aria-hidden="true">
+              {initials(m.nom)}
+            </span>
+            <span class="role">{m.fonction}</span>
+            <span class="name">{m.nom}</span>
+            {m.dicasteres.length > 0 && (
+              <ul class="dicasteres">
+                {m.dicasteres.map((x) => (
+                  <li>{x}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="steps-box">
+      <h3>{d.demandeTitre}</h3>
+      <ol class="steps">
+        {
+          d.etapes.map((e, i) => (
+            <li>
+              <span class="step-num" aria-hidden="true">{i + 1}</span>
+              <span class="step-title">{e.titre}</span>
+              <span class="step-text">
+                {e.texte}
+                {e.lien && (
+                  <>
+                    {' '}
+                    <LocalLink href={e.lien.url} lang={lang}>{e.lien.label}</LocalLink>.
+                  </>
+                )}
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section id="legislatif" class="container section" aria-labelledby="h-leg">
+    <h2 id="h-leg" class="section-title">{d.legislatif.titre}</h2>
+    <div class="council">
+      {nextConseil && <NextSessionCard lang={lang} seance={nextConseil} />}
+      <div class="council-links">
+        {
+          d.conseilLiens.map((l) => (
+            <LocalLink href={l.url} lang={lang} class="council-link card">
+              <span class="council-link-title">{l.titre}</span>
+              <span class="council-link-text">{l.texte}</span>
+            </LocalLink>
+          ))
+        }
+      </div>
+    </div>
+
+    {
+      recents.length > 0 && (
+        <>
+          <h3 class="recents-title">{d.recentsTitre}</h3>
+          <ul class="recents">
+            {recents.map((r) => (
+              <li>
+                <a href={r.href}>
+                  {r.kind === 'seance' ? (
+                    <span class="recent-date">
+                      {formatDate(r.date, lang, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </span>
+                  ) : (
+                    <span class="recent-cat">
+                      {t('cat.elections')} {r.date.getFullYear()}
+                    </span>
+                  )}
+                  <span class="recent-title" lang={r.fallback ? 'fr' : undefined}>
+                    {r.title}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+  </section>
+</Base>
+
+<style>
+  .branches {
+    margin-top: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .branch {
+    flex: 1 1 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: clamp(24px, 3vw, 32px);
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .branch:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .branch .eyebrow {
+    letter-spacing: 0.08em;
+  }
+  .branch-title {
+    font-family: var(--font-serif);
+    font-size: clamp(28px, 3vw, 34px);
+    font-weight: 500;
+  }
+  .branch-text {
+    font-size: 15px;
+    color: var(--text-3);
+  }
+
+  .section {
+    padding-top: 88px;
+    scroll-margin-top: 16px;
+  }
+  .section > .section-title {
+    margin-bottom: 8px;
+  }
+  #legislatif > .section-title {
+    margin-bottom: 28px;
+  }
+  .section-intro {
+    margin: 0 0 28px;
+    font-size: 16px;
+    color: var(--text-3);
+  }
+
+  .members {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+  }
+  .member {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 22px;
+  }
+  .avatar.principal {
+    background: var(--feature-bg);
+    color: var(--feature-text);
+  }
+  .role {
+    font-size: 12px;
+    color: var(--label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .name {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .dicasteres {
+    margin: 0;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--border);
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--text-2);
+  }
+
+  .steps-box {
+    margin-top: 32px;
+    background: var(--surface-3);
+    border-radius: 24px;
+    padding: clamp(24px, 3vw, 36px);
+  }
+  .steps-box h3 {
+    font-size: 28px;
+    margin-bottom: 24px;
+  }
+  .steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+  }
+  .steps li {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 2px solid var(--text);
+    padding-top: 14px;
+  }
+  .step-num {
+    font-family: var(--font-serif);
+    font-size: 36px;
+    line-height: 1;
+  }
+  .step-title {
+    font-size: 17px;
+    font-weight: 500;
+  }
+  .step-text {
+    font-size: 15px;
+    color: var(--text-2);
+    line-height: 1.55;
+  }
+
+  .council {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .council-links {
+    flex: 999 1 520px;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .council-link {
+    padding: 26px;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .council-link:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .council-link-title {
+    font-size: 19px;
+    font-weight: 500;
+  }
+  .council-link-text {
+    font-size: 14px;
+    color: var(--text-3);
+  }
+
+  .recents-title {
+    margin-top: 48px;
+    font-size: 28px;
+  }
+  .recents {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .recents a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+    color: var(--text);
+    align-items: baseline;
+  }
+  .recents a:hover .recent-title {
+    color: var(--accent);
+  }
+  .recent-date {
+    flex: 0 0 140px;
+    font-family: var(--font-serif);
+    font-size: 22px;
+  }
+  .recent-cat {
+    flex: 0 0 140px;
+    font-size: 13px;
+    color: var(--label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .recent-title {
+    flex: 1 1 300px;
+    font-size: 17px;
+    font-weight: 500;
+  }
+</style>

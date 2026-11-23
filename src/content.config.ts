@@ -101,6 +101,8 @@ const seances = defineCollection({
   schema: z.object({
     date: z.coerce.date(),
     organe: z.enum(['conseil', 'municipalite']),
+    /** Agenda items, proposals, minutes… (files in public/documents/). The body is the agenda. */
+    documents: z.array(lien).default([]),
   }),
 });
 
@@ -145,4 +147,30 @@ const pilier = defineCollection({
   }),
 });
 
-export const collections = { commune, personnes, services, avis, seances, accueil, pilier };
+const carte = z.object({ surtitre: z.string(), titre: z.string(), texte: z.string() });
+
+/** Politique page: executive members, request steps, council links. One file per language. */
+const politique = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/politique' }),
+  schema: z.object({
+    intro: z.string(),
+    executif: carte,
+    legislatif: carte,
+    municipaliteIntro: z.string(),
+    membres: z.array(
+      z.object({
+        personne: reference('personnes'),
+        fonction: z.string(),
+        /** Highlighted avatar (e.g. the syndic). */
+        principal: z.boolean().default(false),
+        dicasteres: z.array(z.string()).default([]),
+      }),
+    ),
+    demandeTitre: z.string(),
+    etapes: z.array(z.object({ titre: z.string(), texte: z.string(), lien: lien.optional() })),
+    conseilLiens: z.array(z.object({ titre: z.string(), texte: z.string(), url: z.string() })).default([]),
+    recentsTitre: z.string(),
+  }),
+});
+
+export const collections = { commune, personnes, services, avis, seances, accueil, pilier, politique };

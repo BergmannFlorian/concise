@@ -1,0 +1,82 @@
+---
+/** Large lake-blue card announcing the next session; links to the session page (agenda). */
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, seanceHref } from '../lib/content';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  seance: CollectionEntry<'seances'>;
+  /** Show the body name (useful when the context does not say which body it is). */
+  showOrgane?: boolean;
+}
+const { lang, seance, showOrgane = false } = Astro.props;
+const t = useTranslations(lang);
+const date = seance.data.date;
+---
+
+<a href={seanceHref(seance.id, lang)} class="seance">
+  <span class="label">{t('home.nextSession')}</span>
+  <span class="body">
+    <span class="date">{formatDate(date, lang, { day: '2-digit', month: '2-digit' })}</span>
+    {showOrgane && <span class="organe">{t(`organe.${seance.data.organe}`)}</span>}
+    <span class="when">
+      {formatDate(date, lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+    </span>
+    <span class="cta">{t('home.agenda')}</span>
+  </span>
+</a>
+
+<style>
+  .seance {
+    flex: 1 1 360px;
+    background: var(--feature-bg);
+    color: var(--feature-text);
+    border-radius: 24px;
+    padding: 36px;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+    min-height: 300px;
+  }
+  .seance:hover {
+    color: var(--feature-text);
+  }
+  .seance:hover .cta {
+    text-decoration: underline;
+  }
+  .label {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--feature-label);
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .date {
+    font-family: var(--font-serif);
+    font-size: clamp(64px, 7vw, 88px);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+  }
+  .organe {
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .when {
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .when::first-letter {
+    text-transform: uppercase;
+  }
+  .cta {
+    font-size: 15px;
+    color: var(--feature-muted);
+  }
+</style>

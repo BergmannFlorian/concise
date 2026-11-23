@@ -25,7 +25,7 @@ import. Do not go back to an `<img>`: the logo flickered on every page change.
 | `Main.dc.html` | `/` | ✅ done ("Accueil" entry added first in the menu, not in the mockup) |
 | `Services.dc.html` | `/services` | ✅ done |
 | `PilierPublic.dc.html` | `/pilier-public` + `/pilier-public/<slug>` | ✅ done (one detail page per notice, not in the mockup) |
-| `Politique.dc.html` | `/politique` | ⏳ placeholder |
+| `Politique.dc.html` | `/politique` + `/politique/seances/<id>` | ✅ done (one page per session, not in the mockup) |
 | `VieQuotidienne.dc.html` | `/vie-quotidienne` | ⏳ placeholder |
 | `Locations.dc.html` | `/locations` | ⏳ placeholder |
 | `Contact.dc.html` | `/contact` | ⏳ placeholder |
@@ -78,7 +78,8 @@ src/
 ### Collections (`content.config.ts`)
 `commune` (infos.yaml), `personnes` (one yaml per person, referenced via `reference('personnes')`),
 `services` (fr/…), `avis` (fr/…, official notice board), `seances` (not translated, `organe` translated via UI strings),
-`accueil` and `pilier` (one page-text file per language: fr.md / de.md / en.md, read with `getLocalizedEntry`).
+`accueil`, `pilier` and `politique` (one page-text file per language: fr.md / de.md / en.md, read with `getLocalizedEntry`).
+`seances` have an optional `documents` list; their body is the agenda (French only).
 `avis.categorie` is a closed enum (`avisCategories` in `ui.ts`, labels = `cat.*` UI strings); notices can have
 an optional `document` link.
 
@@ -91,6 +92,14 @@ an optional `document` link.
 - The 17 notices come from the mockup; their **dates are placeholders** (the mockup had none, order preserved)
   and their bodies are "[Texte complet de l'avis à compléter.]".
 
+### Politique (`pages/[...lang]/politique/`)
+- `index.astro`: executive/legislative cards, executive members (names from `personnes`, initials avatar,
+  `principal` = highlighted), request steps, council block (`NextSessionCard` + link cards, all `#` for now),
+  "recent" list = past council sessions + `elections` notices (newest first, max 6).
+- `seances/[id].astro`: one page per session per language (agenda + documents). Every "Ordre du jour" link
+  (home, notice board, politique) points there via `seanceHref()`.
+- `components/NextSessionCard.astro` is shared by the home page and Politique.
+
 ## Design guidelines
 
 - Fonts: **Fraunces** (headings, 500–600) + **Inter** (body).
@@ -100,15 +109,16 @@ an optional `document` link.
 
 ## Next steps
 
-1. Remaining pages from the mockup: Politique (sessions, executive, council; the "next session" banners link
-   there), Vie quotidienne, Locations, Contact.
+1. Remaining pages from the mockup: Vie quotidienne, Locations, Contact.
 2. Search (Pagefind, static); the mockup has a search button.
 3. DE/EN translations of services and notices.
 4. 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
+   "Next session" is computed at build time → schedule a daily rebuild (e.g. cron-triggered deploy hook).
 
 ## Log
 
 - 2026-11-23: read the mockup; chose Astro + Markdown content + FR/DE/EN + dark theme.
   Foundation, home and services done; 5 placeholder pages. Build OK (21 pages, 0 errors).
   Then: "Accueil" menu entry, inlined coat of arms (flicker fix), scrollbar-gutter, all comments/docs in English + README.
-  First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors).
+  First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors), commit `5b1890b`.
+  Then: Politique page + session pages (81 pages built, 0 errors).

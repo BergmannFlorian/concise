@@ -19,7 +19,32 @@ Le texte libre en dessous est écrit en [Markdown](https://www.markdownguide.org
 | La page d'accueil | `src/content/accueil/fr.md` (et `de.md`, `en.md`) |
 | Un service communal | `src/content/services/fr/<service>.md` |
 | Un avis du pilier public | `src/content/avis/fr/<avis>.md` |
-| Une séance (Conseil communal, Municipalité) | `src/content/seances/<date>-<organe>.md` |
+| Une séance (date, ordre du jour, documents) | `src/content/seances/<date>-<organe>.md` |
+| La page Politique (Municipalité, dicastères, étapes, liens du Conseil) | `src/content/politique/fr.md` (et `de.md`, `en.md`) |
+
+## Ajouter une séance
+
+Créez `src/content/seances/2027-03-15-conseil.md` (`organe` : `conseil` ou `municipalite`) :
+
+```markdown
+---
+date: 2027-03-15
+organe: conseil
+documents:
+  - label: Préavis n° 1/2027 (PDF)
+    url: /documents/preavis-2027-01.pdf
+---
+
+1. Appel
+2. Adoption du procès-verbal de la séance du 7 décembre 2026
+3. …
+```
+
+La prochaine séance à venir s'affiche automatiquement sur l'accueil, le pilier public et la page
+Politique ; les séances passées apparaissent dans « Séances et élections récentes ».
+
+> ℹ️ Le site étant statique, « la prochaine séance » est calculée au moment de la publication :
+> il faut republier le site après une séance pour que l'affichage passe à la suivante.
 
 ## Langues
 

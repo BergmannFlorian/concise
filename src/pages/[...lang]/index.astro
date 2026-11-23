@@ -3,7 +3,8 @@ import { getEntry, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import LocalLink from '../../components/LocalLink.astro';
-import { getLocalized, getLocalizedEntry, getNextSeance, formatDate, telHref } from '../../lib/content';
+import NextSessionCard from '../../components/NextSessionCard.astro';
+import { getLocalized, getLocalizedEntry, getNextSeance, telHref } from '../../lib/content';
 import { langFromParam, langPaths, localizePath, useTranslations } from '../../i18n/ui';
 
 export const getStaticPaths = langPaths;
@@ -87,20 +88,7 @@ const contacts = await Promise.all(
       <a href={localizePath('/pilier-public', lang)}>{t('home.allInfo')}</a>
     </div>
     <div class="pilier">
-      {
-        seance && (
-          <a href={localizePath('/politique', lang)} class="seance">
-            <span class="seance-label">{t('home.nextSession')}</span>
-            <span class="seance-body">
-              <span class="seance-date">{formatDate(seance.data.date, lang, { day: '2-digit', month: '2-digit' })}</span>
-              <span class="seance-organe">{t(`organe.${seance.data.organe}`)}</span>
-              <span class="seance-meta">
-                {`${formatDate(seance.data.date, lang, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · ${t('home.agenda')}`}
-              </span>
-            </span>
-          </a>
-        )
-      }
+      {seance && <NextSessionCard lang={lang} seance={seance} showOrgane />}
       <ul class="avis-list">
         {
           avis.map(({ slug, entry, fallback }) => (
@@ -299,47 +287,6 @@ const contacts = await Promise.all(
     display: flex;
     flex-wrap: wrap;
     gap: 24px;
-  }
-  .seance {
-    flex: 1 1 360px;
-    background: var(--feature-bg);
-    color: var(--feature-text);
-    border-radius: 24px;
-    padding: 36px;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 48px;
-    min-height: 340px;
-  }
-  .seance:hover {
-    color: var(--feature-text);
-  }
-  .seance-label {
-    font-size: 13px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--feature-label);
-  }
-  .seance-body {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .seance-date {
-    font-family: var(--font-serif);
-    font-size: 88px;
-    line-height: 0.9;
-    letter-spacing: -0.03em;
-  }
-  .seance-organe {
-    font-size: 22px;
-    font-weight: 500;
-  }
-  .seance-meta {
-    font-size: 15px;
-    color: var(--feature-muted);
   }
   .avis-list {
     flex: 999 1 520px;
