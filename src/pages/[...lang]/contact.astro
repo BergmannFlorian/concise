@@ -1,0 +1,323 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import HoursTable from '../../components/HoursTable.astro';
+import ContactLinks from '../../components/ContactLinks.astro';
+import { getCommune, getLocalizedEntry, resolveContact, telHref } from '../../lib/content';
+import { langFromParam, langPaths, useTranslations } from '../../i18n/ui';
+
+export const getStaticPaths = langPaths;
+
+const lang = langFromParam(Astro.params.lang);
+const t = useTranslations(lang);
+const { entry } = await getLocalizedEntry('contact', lang);
+const d = entry.data;
+const commune = await getCommune();
+const directs = await Promise.all(
+  d.directs.map(async (c) => ({ libelle: c.libelle, contact: await resolveContact(c) })),
+);
+// The address block skips the first line ("Administration communale"), shown as the card label.
+const addressLines = commune.adresse.slice(1).flatMap((l) => l.split(' · '));
+---
+
+<Base lang={lang} current="contact" title={d.titre}>
+  <PageHeader lang={lang} title={d.titre} crumb={t('nav.contact')} />
+
+  <section class="container layout">
+    <div class="info">
+      <div class="admin">
+        <span class="admin-label">{d.adresseTitre}</span>
+        <address class="admin-address">
+          {addressLines.map((line, i) => (i === 0 ? line : <><br />{line}</>))}
+        </address>
+        <span class="admin-links">
+          <a href={telHref(commune.telephone)}>{commune.telephone}</a>
+          <a href={`mailto:${commune.email}`}>{commune.email}</a>
+        </span>
+      </div>
+
+      <div class="desk card">
+        <h2>{d.guichetTitre}</h2>
+        <HoursTable lang={lang} hours={commune.guichet} rule="border" />
+        <p class="desk-note">{d.guichetNote}</p>
+      </div>
+
+      <div class="emergency">
+        <span class="emergency-label">{d.urgencesTitre}</span>
+        <a href={telHref(commune.urgences)} class="emergency-phone">{commune.urgences}</a>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <!--
+        Static site: the form composes an email in the visitor's mail app (mailto).
+        Without JS, the browser's native mailto form submission is used as a fallback.
+        To receive messages directly, plug a form backend at deployment (e.g. Netlify Forms).
+      -->
+      <form
+        class="form"
+        action={`mailto:${commune.email}`}
+        method="post"
+        enctype="text/plain"
+        data-contact-form
+        data-to={commune.email}
+        data-from-label={t('contact.from')}
+      >
+        <h2>{d.formTitre}</h2>
+        <div class="row">
+          <label>
+            {t('contact.name')}
+            <input type="text" name="nom" autocomplete="name" required />
+          </label>
+          <label>
+            {t('contact.email')}
+            <input type="email" name="email" autocomplete="email" required />
+          </label>
+        </div>
+        <label>
+          {t('contact.subject')}
+          <select name="sujet">
+            {d.sujets.map((s) => <option>{s}</option>)}
+          </select>
+        </label>
+        <label>
+          {t('contact.message')}
+          <textarea name="message" rows="6" required></textarea>
+        </label>
+        <p class="note">{d.formNote}</p>
+        <div class="submit">
+          <button type="submit">{t('contact.send')}</button>
+          <span class="note">{t('contact.mailtoNote')}</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="container directs-wrap" aria-labelledby="h-dir">
+    <h2 id="h-dir" class="directs-title">{d.directsTitre}</h2>
+    <ul class="directs">
+      {
+        directs.map((c) => (
+          <li>
+            <span class="direct-label">{c.libelle}</span>
+            <ContactLinks contact={c.contact} class="direct-links" />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>
+
+<script>
+  // Builds a clean mailto: link (subject + body) instead of the raw text/plain form submission.
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = new FormData(form);
+    const get = (k: string) => String(data.get(k) ?? '').trim();
+    const subject = `${get('sujet')} – ${get('nom')}`;
+    const body = `${get('message')}\n\n—\n${form.dataset.fromLabel}: ${get('nom')} <${get('email')}>`;
+    location.href = `mailto:${form.dataset.to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
+</script>
+
+<style>
+  .layout {
+    padding-top: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: stretch;
+  }
+  .info {
+    flex: 1 1 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .admin {
+    background: var(--feature-bg);
+    color: var(--feature-text);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .admin-label {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--feature-label);
+  }
+  .admin-address {
+    font-style: normal;
+    font-family: var(--font-serif);
+    font-size: 30px;
+    line-height: 1.2;
+  }
+  .admin-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 16px;
+  }
+  .admin-links a {
+    color: var(--feature-text);
+    font-weight: 500;
+  }
+  .desk {
+    border-radius: 24px;
+    padding: 28px;
+  }
+  .desk h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  .desk-note {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .emergency {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border-radius: 24px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .emergency-label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .emergency-phone {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    color: var(--danger-text);
+    text-decoration: none;
+  }
+  .emergency-phone:hover {
+    color: var(--danger-text);
+    text-decoration: underline;
+  }
+
+  .form-card {
+    flex: 999 1 520px;
+    min-width: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: clamp(24px, 3.5vw, 36px);
+  }
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .form h2 {
+    font-size: 32px;
+    margin-bottom: 4px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .row label {
+    flex: 1 1 220px;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  input,
+  select,
+  textarea {
+    border: 1px solid var(--pill-border);
+    border-radius: 12px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 400;
+    background: var(--bg);
+    color: var(--text);
+  }
+  input,
+  select {
+    height: 48px;
+    padding: 0 14px;
+  }
+  textarea {
+    padding: 12px 14px;
+    resize: vertical;
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .note {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+  .submit {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: center;
+  }
+  button[type='submit'] {
+    min-height: 48px;
+    padding: 0 28px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button[type='submit']:hover {
+    background: var(--accent-hover);
+  }
+
+  .directs-wrap {
+    padding-top: 80px;
+  }
+  .directs-title {
+    font-size: clamp(28px, 3vw, 36px);
+    letter-spacing: -0.015em;
+    margin-bottom: 20px;
+  }
+  .directs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0 32px;
+    border-top: 1px solid var(--rule);
+  }
+  .directs li {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .direct-label {
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .directs :global(.direct-links) {
+    font-size: 14px;
+  }
+</style>

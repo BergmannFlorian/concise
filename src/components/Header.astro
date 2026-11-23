@@ -131,6 +131,11 @@ const t = useTranslations(lang);
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
+  /* Contact button on the contact page: inverted (dark) instead of accent. */
+  .actions .btn-primary[aria-current='page'] {
+    background: var(--text);
+    color: var(--bg);
+  }
   .actions {
     display: flex;
     gap: 10px;

@@ -21,6 +21,13 @@ Le texte libre en dessous est écrit en [Markdown](https://www.markdownguide.org
 | Un avis du pilier public | `src/content/avis/fr/<avis>.md` |
 | Une séance (date, ordre du jour, documents) | `src/content/seances/<date>-<organe>.md` |
 | La page Politique (Municipalité, dicastères, étapes, liens du Conseil) | `src/content/politique/fr.md` (et `de.md`, `en.md`) |
+| La page Vie quotidienne (enfants, écoles, bibliothèque, déchets, village, histoire) | `src/content/vie/fr.md` (et `de.md`, `en.md`) |
+| La page Locations (salles, chalet, couvert, autres lieux) | `src/content/locations/fr.md` (et `de.md`, `en.md`) |
+| La page Contact (textes, sujets du formulaire, contacts directs) | `src/content/contact/fr.md` (et `de.md`, `en.md`) |
+
+> 📷 **Photos** : placez l'image dans `public/images/` puis ajoutez `image: /images/mon-fichier.jpg`
+> à côté du champ `photo` (qui décrit l'image pour les personnes malvoyantes). Sans image, un cadre
+> « Photo à venir » s'affiche.
 
 ## Ajouter une séance
 

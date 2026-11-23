@@ -26,12 +26,12 @@ import. Do not go back to an `<img>`: the logo flickered on every page change.
 | `Services.dc.html` | `/services` | ✅ done |
 | `PilierPublic.dc.html` | `/pilier-public` + `/pilier-public/<slug>` | ✅ done (one detail page per notice, not in the mockup) |
 | `Politique.dc.html` | `/politique` + `/politique/seances/<id>` | ✅ done (one page per session, not in the mockup) |
-| `VieQuotidienne.dc.html` | `/vie-quotidienne` | ⏳ placeholder |
-| `Locations.dc.html` | `/locations` | ⏳ placeholder |
-| `Contact.dc.html` | `/contact` | ⏳ placeholder |
+| `VieQuotidienne.dc.html` | `/vie-quotidienne` | ✅ done (h1 "Vivre à Concise", breadcrumb/menu "Vie quotidienne") |
+| `Locations.dc.html` | `/locations` | ✅ done |
+| `Contact.dc.html` | `/contact` | ✅ done (form = mailto, see below) |
 
-Placeholder pages come from `src/pages/[...lang]/[section].astro`: when building the real page, remove its
-entry from the `pending` list in that file.
+All mockup pages are built. Photos in the mockup are placeholders: content supports an optional `image`
+(path under `public/`) and shows a dashed "Photo à venir" box until one is provided.
 
 ## Stack & commands
 
@@ -51,9 +51,11 @@ src/
   i18n/ui.ts            languages (fr default, de, en), UI strings, localizePath/stripLang helpers, navItems
   styles/global.css     colour tokens (light + dark), base styles, utility classes (.container .pill .btn-primary .card .eyebrow .section-title .prose)
   layouts/Base.astro    <html>, theme anti-flash script, unofficial banner, front-desk bar, Header, Footer, hreflang
-  components/           Header (mobile menu), Footer, ThemeToggle, LangSwitch, Icon (stroke icons), LocalLink, PageHeader
+  components/           Header (mobile menu), Footer, ThemeToggle, LangSwitch, Icon (stroke icons), LocalLink,
+                        PageHeader (breadcrumb: parent/crumb/compact), NextSessionCard, HoursTable, ContactLinks
   assets/               inlined SVGs
-  lib/content.ts        getLocalized (FR fallback), getLocalizedEntry, getCommune, getNextSeance, telHref, formatDate, weekdayName
+  lib/content.ts        getLocalized (FR fallback), getLocalizedEntry, getCommune, getNextSeance/getPastSeances,
+                        seanceHref, resolveContact (personne ref + inline fields), initials, telHref, formatDate, weekdayName
   content.config.ts     collection schemas
   content/              editable content (see CONTENU.md)
   pages/[...lang]/      one page = one file; getStaticPaths = langPaths → /x, /de/x, /en/x
@@ -78,7 +80,9 @@ src/
 ### Collections (`content.config.ts`)
 `commune` (infos.yaml), `personnes` (one yaml per person, referenced via `reference('personnes')`),
 `services` (fr/…), `avis` (fr/…, official notice board), `seances` (not translated, `organe` translated via UI strings),
-`accueil`, `pilier` and `politique` (one page-text file per language: fr.md / de.md / en.md, read with `getLocalizedEntry`).
+`accueil`, `pilier`, `politique`, `vie`, `locations`, `contact` (one page-text file per language: fr.md / de.md / en.md,
+read with `getLocalizedEntry`). Shared schema pieces: `lien`, `horaire` (weekday enum + hours), `chiffre`, `contact`
+(`personne` ref and/or inline `nom`/`role`/`telephone`/`email`/`url`, resolved with `resolveContact`).
 `seances` have an optional `documents` list; their body is the agenda (French only).
 `avis.categorie` is a closed enum (`avisCategories` in `ui.ts`, labels = `cat.*` UI strings); notices can have
 an optional `document` link.
@@ -100,6 +104,16 @@ an optional `document` link.
   (home, notice board, politique) points there via `seanceHref()`.
 - `components/NextSessionCard.astro` is shared by the home page and Politique.
 
+### Vie quotidienne / Locations / Contact
+- Vie: section chips built from each section's `menu` label; waste block uses the `--olive-*` tokens.
+- Locations: `principal` venue (photo + figures + documents + booking), `secondaires` (`style: beige|bleu`),
+  `autres` (non-municipal venues, inline contacts).
+- Contact: address, phone, emergency number and desk hours come from `commune/infos.yaml`; emergency box uses
+  `--danger-*` tokens. **The form has no backend**: JS builds a `mailto:` (subject + body) to `commune.email`;
+  without JS the native `mailto` form post is the fallback. At deployment, switch to a form backend
+  (e.g. Netlify Forms) if messages should be received without the visitor's mail app.
+- The header Contact button is inverted (dark) when it is the current page.
+
 ## Design guidelines
 
 - Fonts: **Fraunces** (headings, 500–600) + **Inter** (body).
@@ -109,10 +123,11 @@ an optional `document` link.
 
 ## Next steps
 
-1. Remaining pages from the mockup: Vie quotidienne, Locations, Contact.
+1. Replace placeholders: notice dates/bodies, session agendas, `#` links (archives, council links, schools,
+   associations, PDFs…), photos.
 2. Search (Pagefind, static); the mockup has a search button.
 3. DE/EN translations of services and notices.
-4. 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
+4. Contact form backend (see above), 404 page, deployment (Netlify / Cloudflare Pages), possibly a Git-based CMS (Decap / Pages CMS) for editors.
    "Next session" is computed at build time → schedule a daily rebuild (e.g. cron-triggered deploy hook).
 
 ## Log
@@ -121,4 +136,5 @@ an optional `document` link.
   Foundation, home and services done; 5 placeholder pages. Build OK (21 pages, 0 errors).
   Then: "Accueil" menu entry, inlined coat of arms (flicker fix), scrollbar-gutter, all comments/docs in English + README.
   First commit `1813916`. Then: Pilier public page + notice detail pages (72 pages built, 0 errors), commit `5b1890b`.
-  Then: Politique page + session pages (81 pages built, 0 errors).
+  Then: Politique page + session pages (81 pages built, 0 errors), commit `42430ef`.
+  Then: Vie quotidienne (`1c80a94`), Locations (`6e28661`), Contact; placeholder route removed. All mockup pages done.
