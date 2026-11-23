@@ -5,7 +5,7 @@ import LocalLink from '../../components/LocalLink.astro';
 import HoursTable from '../../components/HoursTable.astro';
 import ContactLinks from '../../components/ContactLinks.astro';
 import { getLocalizedEntry, resolveContact } from '../../lib/content';
-import { langFromParam, langPaths, useTranslations } from '../../i18n/ui';
+import { assetUrl, langFromParam, langPaths, useTranslations } from '../../i18n/ui';
 
 export const getStaticPaths = langPaths;
 
@@ -125,7 +125,7 @@ const sections = [
         d.histoire.cartes.map((c) => (
           <LocalLink href={c.url} lang={lang} class="history-card">
             {c.image ? (
-              <img src={c.image} alt={c.photo} class="history-img" loading="lazy" />
+              <img src={assetUrl(c.image)} alt={c.photo} class="history-img" loading="lazy" />
             ) : (
               <span class="history-img placeholder" role="img" aria-label={`${c.photo} (${t('photo.soon')})`}>
                 <span aria-hidden="true">{t('photo.soon')}</span>

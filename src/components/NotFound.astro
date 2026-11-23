@@ -5,7 +5,7 @@
  */
 import Base from '../layouts/Base.astro';
 import Icon from './Icon.astro';
-import { localizePath, navItems, useTranslations, type Lang } from '../i18n/ui';
+import { BASE, defaultLang, langList, localizePath, navItems, useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
@@ -13,7 +13,23 @@ interface Props {
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 const useful = [...navItems.filter((i) => i.key !== 'home'), { key: 'contact', path: '/contact', label: 'nav.contact' } as const];
+
+// GitHub Pages serves this French page for every unknown URL: send /de/… and /en/… visitors to
+// their language's 404 (production only, so `astro dev` never loops).
+const redirectOtherLangs = lang === defaultLang && import.meta.env.PROD;
+const otherLangs = langList.filter((l) => l !== defaultLang);
 ---
+
+{
+  redirectOtherLangs && (
+    <script is:inline define:vars={{ base: BASE, langs: otherLangs }}>
+      var m = location.pathname.slice(base.length).match(/^\/([a-z]{2})\//);
+      if (m && langs.indexOf(m[1]) !== -1 && !/\/404(\.html)?$/.test(location.pathname)) {
+        location.replace(base + '/' + m[1] + '/404.html');
+      }
+    </script>
+  )
+}
 
 <Base lang={lang} title={t('error.title')} errorPage>
   <section class="container error">

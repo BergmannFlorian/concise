@@ -7,7 +7,7 @@
  * Open buttons: any element with [data-search-open] (see Header). Requires JS: buttons are hidden without it.
  */
 import Icon from './Icon.astro';
-import { useTranslations, type Lang } from '../i18n/ui';
+import { BASE, useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
@@ -15,7 +15,7 @@ interface Props {
 const t = useTranslations(Astro.props.lang);
 ---
 
-<dialog class="search-dialog" aria-labelledby="search-title" data-search-dialog>
+<dialog class="search-dialog" aria-labelledby="search-title" data-search-dialog data-base={BASE}>
   <div class="search-head">
     <h2 id="search-title">{t('search.title')}</h2>
     <button type="button" class="search-close" data-search-close aria-label={t('search.close')}>
@@ -34,6 +34,8 @@ const t = useTranslations(Astro.props.lang);
   }
 
   const dialog = document.querySelector<HTMLDialogElement>('[data-search-dialog]');
+  // Base path ('' or '/concise'): Pagefind files and result URLs live under it.
+  const base = dialog?.dataset.base ?? '';
   let loading: Promise<void> | null = null;
 
   function loadPagefind(): Promise<void> {
@@ -41,15 +43,17 @@ const t = useTranslations(Astro.props.lang);
     loading = new Promise<void>((resolve, reject) => {
       const css = document.createElement('link');
       css.rel = 'stylesheet';
-      css.href = '/pagefind/pagefind-ui.css';
+      css.href = `${base}/pagefind/pagefind-ui.css`;
       document.head.append(css);
 
       const script = document.createElement('script');
-      script.src = '/pagefind/pagefind-ui.js';
+      script.src = `${base}/pagefind/pagefind-ui.js`;
       script.onload = () => {
         if (!window.PagefindUI) return reject(new Error('PagefindUI missing'));
         new window.PagefindUI({
           element: '#pagefind-search',
+          bundlePath: `${base}/pagefind/`,
+          baseUrl: `${base}/`,
           showSubResults: true,
           showImages: false,
           autofocus: true,

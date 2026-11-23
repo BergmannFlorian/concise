@@ -1,0 +1,54 @@
+# Builds the static site (Astro + Pagefind index) and publishes it to GitHub Pages.
+# Site URL: https://bergmannflorian.github.io/concise/ (site/base set in astro.config.mjs).
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  # Manual run from the Actions tab.
+  workflow_dispatch:
+  # Daily rebuild: the "next session" shown on the site is computed at build time.
+  schedule:
+    - cron: '17 3 * * *' # 03:17 UTC
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; never cancel one that is in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # astro check + astro build + pagefind --site dist
+      - run: npm run build
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

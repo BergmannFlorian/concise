@@ -30,8 +30,10 @@ function localized404() {
 }
 
 export default defineConfig({
-  // Replace with the final domain when deploying.
-  site: 'https://concise.example',
+  // GitHub Pages project site by default (https://bergmannflorian.github.io/concise/).
+  // For a custom domain or another host, set SITE_URL (e.g. https://example.ch) and BASE_PATH=/ at build time.
+  site: process.env.SITE_URL ?? 'https://bergmannflorian.github.io',
+  base: process.env.BASE_PATH ?? '/concise',
   i18n: {
     locales: ['fr', 'de', 'en'],
     defaultLocale: 'fr',

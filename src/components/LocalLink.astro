@@ -1,14 +1,19 @@
 ---
 /**
- * Link that automatically adds the language prefix to internal links
- * ('/services#port' → '/de/services#port'). External links and anchors are left as is.
+ * Link for URLs coming from content. Internal pages get the base path and language prefix
+ * ('/services#port' → '/concise/de/services#port'); files (e.g. '/documents/x.pdf') only get the base path;
+ * external links, mailto:/tel: and in-page anchors are left as is.
  */
 import type { HTMLAttributes } from 'astro/types';
-import { localizePath, type Lang } from '../i18n/ui';
+import { localizePath, withBase, type Lang } from '../i18n/ui';
 
 type Props = HTMLAttributes<'a'> & { href: string; lang: Lang };
 const { href, lang, ...rest } = Astro.props;
-const finalHref = href.startsWith('/') ? localizePath(href, lang) : href;
+
+/** '/documents/plan.pdf' → true ; '/services#port' → false. */
+const isFile = (path: string) => /\.[a-z0-9]{2,5}$/i.test(path.split(/[?#]/)[0]);
+
+const finalHref = !href.startsWith('/') ? href : isFile(href) ? withBase(href) : localizePath(href, lang);
 ---
 
 <a href={finalHref} {...rest}><slot /></a>

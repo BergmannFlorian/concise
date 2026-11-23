@@ -299,18 +299,35 @@ export function langPaths() {
   return langList.map((lang) => ({ params: { lang: lang === defaultLang ? undefined : lang } }));
 }
 
-/** '/services' + 'de' → '/de/services'; French stays unprefixed. */
-export function localizePath(path: string, lang: Lang): string {
-  const clean = path.startsWith('/') ? path : `/${path}`;
-  if (lang === defaultLang) return clean;
-  return clean === '/' ? `/${lang}/` : `/${lang}${clean}`;
+/**
+ * Site base path, without trailing slash: '' when served at a domain root, '/concise' on GitHub Pages
+ * (`base` in astro.config.mjs). Every internal URL must go through withBase() or localizePath().
+ */
+export const BASE = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '');
+
+/** Prefixes a site-root path with the base path: '/armoiries.svg' → '/concise/armoiries.svg'. */
+export function withBase(path: string): string {
+  return `${BASE}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-/** Removes the language prefix from a path: '/de/services' → '/services'. */
+/** URL of a file from content (images, PDFs): site-root paths get the base path, full URLs are kept. */
+export function assetUrl(url: string): string {
+  return url.startsWith('/') ? withBase(url) : url;
+}
+
+/** '/services' + 'de' → '/concise/de/services'; French stays unprefixed ('/concise/services'). */
+export function localizePath(path: string, lang: Lang): string {
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  if (lang === defaultLang) return withBase(clean);
+  return withBase(clean === '/' ? `/${lang}/` : `/${lang}${clean}`);
+}
+
+/** Removes the base path and language prefix: '/concise/de/services' → '/services'. */
 export function stripLang(pathname: string): string {
-  const [, first, ...rest] = pathname.split('/');
+  const path = BASE && pathname.startsWith(BASE) ? pathname.slice(BASE.length) || '/' : pathname;
+  const [, first, ...rest] = path.split('/');
   if (first && first in languages) return `/${rest.join('/')}`;
-  return pathname;
+  return path;
 }
 
 /** Main navigation pages. Slugs stay in French in every language. */

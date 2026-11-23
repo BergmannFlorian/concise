@@ -4,7 +4,7 @@ import PageHeader from '../../components/PageHeader.astro';
 import LocalLink from '../../components/LocalLink.astro';
 import ContactLinks from '../../components/ContactLinks.astro';
 import { getLocalizedEntry, resolveContact } from '../../lib/content';
-import { langFromParam, langPaths, useTranslations } from '../../i18n/ui';
+import { assetUrl, langFromParam, langPaths, useTranslations } from '../../i18n/ui';
 
 export const getStaticPaths = langPaths;
 
@@ -29,7 +29,7 @@ const others = await Promise.all(
     <article class="main">
       {
         main.image ? (
-          <img src={main.image} alt={main.photo ?? ''} class="main-photo" />
+          <img src={assetUrl(main.image)} alt={main.photo ?? ''} class="main-photo" />
         ) : (
           <div class="main-photo placeholder" role="img" aria-label={`${main.photo ?? main.titre} (${t('photo.soon')})`}>
             <span aria-hidden="true">{t('photo.soon')}</span>
