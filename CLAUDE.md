@@ -35,7 +35,7 @@ All mockup pages are built. Photos in the mockup are placeholders: content suppo
 
 ## Repository
 
-GitHub: https://github.com/BergmannFlorian/concise (**public**, branch `master`, remote `origin`).
+GitHub: https://github.com/BergmannFlorian/concise (**public**, branch `main`, remote `origin`).
 `gh` is logged in as BergmannFlorian. Commit/push only when the user asks.
 Commits use the GitHub noreply address (local `git config user.email` =
 `50400867+BergmannFlorian@users.noreply.github.com`); the user's personal email must not appear in the history.
@@ -43,7 +43,7 @@ Commits use the GitHub noreply address (local `git config user.email` =
 ## Deployment (GitHub Pages)
 
 - Live site: **https://bergmannflorian.github.io/concise/** (project site → base path `/concise`).
-- `.github/workflows/deploy.yml`: on push to `master`, manual run, and daily at 03:17 UTC (refreshes the
+- `.github/workflows/deploy.yml`: on push to `main`, manual run, and daily at 03:17 UTC (refreshes the
   build-time "next session"). Steps: `npm ci` → `npm run build` → upload `dist` → `actions/deploy-pages`.
 - Pages source = "GitHub Actions" (enabled via `gh api -X POST repos/BergmannFlorian/concise/pages -f build_type=workflow`).
 - `astro.config.mjs`: `site`/`base` default to GitHub Pages; override with env `SITE_URL` and `BASE_PATH=/`

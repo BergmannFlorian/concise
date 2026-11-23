@@ -73,7 +73,7 @@ redefined for the dark theme. Components never hard-code colours.
 The site is deployed to **GitHub Pages**: https://bergmannflorian.github.io/concise/
 
 The [Deploy to GitHub Pages](.github/workflows/deploy.yml) workflow builds and publishes the site on every
-push to `master`, on demand (Actions tab → *Run workflow*), and once a day (some content, such as the next
+push to `main`, on demand (Actions tab → *Run workflow*), and once a day (some content, such as the next
 council session, is computed at build time).
 
 The site is served under the `/concise` base path. To host it elsewhere (custom domain, Netlify,
